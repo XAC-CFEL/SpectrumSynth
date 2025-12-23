@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpectrumSynth - Test Interactive Features</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>SpectrumSynth Interactive Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Data Loading</h3>
+        <button onclick="testDataLoading()">Test Element Data</button>
+        <div id="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Interactive Controls</h3>
+        <p>Element: 
+            <select id="test-element">
+                <option value="neon">Neon</option>
+                <option value="argon">Argon</option>
+                <option value="krypton">Krypton</option>
+            </select>
+        </p>
+        <p>Photon Energy: 
+            <select id="test-photon">
+                <option value="1000">1000 eV</option>
+                <option value="1486.6">1486.6 eV</option>
+            </select>
+        </p>
+        <p>Work Function: <input type="range" id="test-ret" min="0" max="10" value="0" step="0.1"> 
+           <span id="ret-display">0</span> eV</p>
+        
+        <button onclick="testCalculation()">Test Calculation</button>
+        <div id="calc-result"></div>
+    </div>
+    
+    <script src="elements_data.js"></script>
+    <script>
+        function testDataLoading() {
+            const result = document.getElementById('result');
+            
+            if (typeof ELEMENTS_DATA !== 'undefined') {
+                const elementNames = Object.keys(ELEMENTS_DATA);
+                result.innerHTML = `
+                    <strong>✓ Data loaded successfully!</strong><br>
+                    Available elements: ${elementNames.join(', ')}<br>
+                    Sample binding energy (Neon 1s): ${ELEMENTS_DATA.neon.binding_energies['1s']} eV
+                `;
+                result.style.color = 'green';
+            } else {
+                result.innerHTML = '✗ Failed to load element data';
+                result.style.color = 'red';
+            }
+        }
+        
+        function testCalculation() {
+            const element = document.getElementById('test-element').value;
+            const photonEnergy = parseFloat(document.getElementById('test-photon').value);
+            const ret = parseFloat(document.getElementById('test-ret').value);
+            const resultDiv = document.getElementById('calc-result');
+            
+            const elementData = ELEMENTS_DATA[element];
+            const bindingEnergies = elementData.binding_energies;
+            
+            let peaks = [];
+            Object.entries(bindingEnergies).forEach(([shell, bindingEnergy]) => {
+                const kineticEnergy = photonEnergy - bindingEnergy - ret;
+                if (kineticEnergy > 0) {
+                    peaks.push({
+                        shell: shell,
+                        binding: bindingEnergy,
+                        kinetic: kineticEnergy.toFixed(1)
+                    });
+                }
+            });
+            
+            resultDiv.innerHTML = `
+                <strong>Calculated peaks for ${elementData.name}:</strong><br>
+                ${peaks.map(p => `${p.shell}: ${p.kinetic} eV kinetic (${p.binding} eV binding)`).join('<br>')}
+            `;
+        }
+        
+        // Update ret display
+        document.getElementById('test-ret').addEventListener('input', (e) => {
+            document.getElementById('ret-display').textContent = e.target.value;
+        });
+        
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            testDataLoading();
+        });
+    </script>
+</body>
+</html>
