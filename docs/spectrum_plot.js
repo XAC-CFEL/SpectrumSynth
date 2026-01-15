@@ -376,14 +376,28 @@ class SpectrumPlotter {
             this.showGaussians = true;
             this.updateGaussiansButtons();
             this.saveToCache();
-            this.plotSpectrum();
+            // Preserve current axis ranges
+            const plotDiv = document.getElementById('spectrum-plot');
+            const xaxis = plotDiv.layout?.xaxis;
+            const yaxis = plotDiv.layout?.yaxis;
+            let xRange = null, yRange = null;
+            if (xaxis && xaxis.range) xRange = [...xaxis.range];
+            if (yaxis && yaxis.range) yRange = [...yaxis.range];
+            this.plotSpectrum(xRange, yRange);
         });
         
         document.getElementById('gaussians-off-btn').addEventListener('click', () => {
             this.showGaussians = false;
             this.updateGaussiansButtons();
             this.saveToCache();
-            this.plotSpectrum();
+            // Preserve current axis ranges
+            const plotDiv = document.getElementById('spectrum-plot');
+            const xaxis = plotDiv.layout?.xaxis;
+            const yaxis = plotDiv.layout?.yaxis;
+            let xRange = null, yRange = null;
+            if (xaxis && xaxis.range) xRange = [...xaxis.range];
+            if (yaxis && yaxis.range) yRange = [...yaxis.range];
+            this.plotSpectrum(xRange, yRange);
         });
         
         // Gaussian width input
@@ -502,7 +516,11 @@ class SpectrumPlotter {
         if (this.selectedElements.length === 0 || this.selectedPhotonEnergies.length === 0) {
             const layout = {
                 title: 'XPS Spectrum - Select elements and photon energies',
-                xaxis: { title: 'Kinetic Energy (eV)', range: [0, 1500] },
+                xaxis: { 
+                    title: 'Kinetic Energy (eV)', 
+                    range: [Math.log10(1500), Math.log10(1.0)],  // Reversed: [max, min] in log space
+                    type: 'log'
+                },
                 yaxis: { title: 'Cross Section (Mb)', type: yAxisType },
                 height: 500,
                 template: 'plotly_white'
@@ -584,18 +602,20 @@ class SpectrumPlotter {
         const maxBinding = Math.max(...allBindingEnergies);
         const maxPhotonEnergy = Math.max(...this.selectedPhotonEnergies);
         
-        // Calculate kinetic energy range
-        const minKinetic = Math.max(0, Math.min(...this.selectedPhotonEnergies) - maxBinding - this.currentRet);
-        const maxKinetic = maxPhotonEnergy - minBinding - this.currentRet;
-        const padding = (maxKinetic - minKinetic) * 0.05;
-        let plotMin = Math.max(0, minKinetic - padding);
-        let plotMax = maxKinetic + padding;
+        // Set x-axis range: from max photon energy down to 1.0 (for log scale)
+        // For reversed log axis, specify range as [max, min]
+        let plotMax = maxPhotonEnergy;
+        let plotMin = 1.0;  // Minimum for log scale (1 eV)
         let yMin = this.logScale ? 0.0001 : 0;
         let yMax = undefined;
         
         if (xRangeOverride && xRangeOverride.length === 2) {
-            plotMin = xRangeOverride[0];
-            plotMax = xRangeOverride[1];
+            // xRangeOverride is in log space [log(max), log(min)]
+            // Convert back to linear space
+            const val0 = Math.pow(10, xRangeOverride[0]);  // Higher value (left side)
+            const val1 = Math.pow(10, xRangeOverride[1]);  // Lower value (right side)
+            plotMax = Math.max(val0, val1);
+            plotMin = Math.max(1.0, Math.min(val0, val1));
         }
         if (yRangeOverride && yRangeOverride.length === 2) {
             yMin = yRangeOverride[0];
@@ -607,7 +627,11 @@ class SpectrumPlotter {
             const energyStr = this.selectedPhotonEnergies.join(', ');
             const layout = {
                 title: `${elementNames} XPS Spectrum - No peaks (photon energies: ${energyStr} eV)`,
-                xaxis: { title: 'Kinetic Energy (eV)', range: [0, maxPhotonEnergy] },
+                xaxis: { 
+                    title: 'Kinetic Energy (eV)', 
+                    range: [Math.log10(maxPhotonEnergy), Math.log10(1.0)],  // Reversed: [max, min] in log space
+                    type: 'log'
+                },
                 yaxis: { title: 'Cross Section (Mb)', type: yAxisType },
                 height: 500,
                 template: 'plotly_white'
@@ -629,8 +653,8 @@ class SpectrumPlotter {
             },
             xaxis: { 
                 title: 'Kinetic Energy (eV)',
-                range: [plotMin, plotMax],
-                autorange: false
+                range: [Math.log10(plotMax), Math.log10(plotMin)],  // Reversed: [max, min] in log space
+                type: 'log'
             },
             yaxis: { 
                 title: 'Cross Section (Mb)',
@@ -655,12 +679,13 @@ class SpectrumPlotter {
         // Add Gaussian curves if enabled
         if (this.showGaussians && allSpectrumData.length > 0) {
             const sigma = this.gaussianWidth / 2.355; // Convert FWHM to sigma
-            const energyRange = plotMax - plotMin;
+            
+            // Fixed 0.1 eV steps from plotMin to plotMax
             const stepSize = 0.1;
-            const numPoints = Math.max(200, Math.min(2000, Math.ceil(energyRange / stepSize)));
+            const numPoints = Math.ceil((plotMax - plotMin) / stepSize);
             const xGauss = [];
-            for (let i = 0; i < numPoints; i++) {
-                xGauss.push(plotMin + (i / (numPoints - 1)) * energyRange);
+            for (let i = 0; i <= numPoints; i++) {
+                xGauss.push(plotMin + i * stepSize);
             }
             
             // Sum of all Gaussians
@@ -800,136 +825,47 @@ class SpectrumPlotter {
     }
     
     addShellAnnotations(spectrumData) {
-        if (spectrumData.length === 0) {
+        // Simple annotation placement: just put labels above each bar
+        if (spectrumData.length === 0 || !this.showAnnotations) {
             Plotly.relayout('spectrum-plot', { annotations: [] });
             return;
         }
         
-        // Get plot dimensions for calculating text box sizes
-        const plotDiv = document.getElementById('spectrum-plot');
-        const xAxis = plotDiv._fullLayout?.xaxis;
-        const yAxis = plotDiv._fullLayout?.yaxis;
+        // Filter to only peaks with positive kinetic energy
+        const validData = spectrumData.filter(d => d.x >= 1.0);
         
-        if (!xAxis || !yAxis) {
-            // Fallback if layout not ready
-            setTimeout(() => this.addShellAnnotations(spectrumData), 100);
+        if (validData.length === 0) {
+            Plotly.relayout('spectrum-plot', { annotations: [] });
             return;
         }
         
-        // Get actual pixel dimensions and ranges
-        const plotWidth = xAxis._length || 800;
-        const plotHeight = yAxis._length || 400;
-        const xDataRange = xAxis.range[1] - xAxis.range[0];
+        // Sort by x position (kinetic energy) descending for overlap handling
+        validData.sort((a, b) => b.x - a.x);
         
-        // For log scale, Plotly stores range in log10 space already
-        const yMin = yAxis.range[0];
-        const yMax = yAxis.range[1];
-        const yDataRange = yMax - yMin;
-        
-        // Conversion functions
-        const dataToPixelX = (dataX) => ((dataX - xAxis.range[0]) / xDataRange) * plotWidth;
-        const dataToPixelY = (dataY) => {
-            // In log scale, convert data to log10, then map to pixels
-            // In linear scale, use data directly
-            const yVal = this.logScale ? Math.log10(Math.max(dataY, 1e-10)) : dataY;
-            return plotHeight - ((yVal - yMin) / yDataRange) * plotHeight;
-        };
-        const pixelToDataX = (px) => xAxis.range[0] + (px / plotWidth) * xDataRange;
-        const pixelToDataY = (px) => {
-            const yVal = yMin + ((plotHeight - px) / plotHeight) * yDataRange;
-            return this.logScale ? Math.pow(10, yVal) : yVal;
-        };
-        
-        // Measure text using canvas for accurate width
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const fontSize = 10;
-        ctx.font = `bold ${fontSize}px "Open Sans", verdana, arial, sans-serif`;
-        
-        const boxPadding = 4;
-        
-        // Build annotation boxes with measured dimensions
-        const boxes = spectrumData.map(d => {
-            const text = d.shell;
-            const measuredWidth = ctx.measureText(text).width;
-            // Box dimensions in pixels
-            const w = measuredWidth + boxPadding * 2 + 10;
-            const h = fontSize + boxPadding * 2 + 8;
+        // Simple annotations: place each label directly above its bar
+        // Use yref='paper' for consistent positioning
+        const annotations = validData.map((d, index) => {
+            const elementColor = ELEMENT_COLORS[d.elementKey]?.fill || '#333';
+            
+            // Stagger y position slightly to avoid overlap (alternating heights)
+            const yOffset = 1.02 + (index % 3) * 0.04;
             
             return {
-                text,
-                elementKey: d.elementKey,
-                // Anchor position (center x, bar top for y reference)
-                x: dataToPixelX(d.x),
-                barTop: dataToPixelY(d.y),
-                w,
-                h,
-                // Final position (will be set during placement)
-                y: null
-            };
-        });
-        
-        // Sort by x position
-        boxes.sort((a, b) => a.x - b.x);
-        
-        // Placed boxes list
-        const placed = [];
-        
-        // Helper: check if box intersects with any placed box
-        const intersectsAny = (box, testY) => {
-            const left = box.x - box.w / 2;
-            const right = box.x + box.w / 2;
-            const top = testY - box.h / 2;
-            const bottom = testY + box.h / 2;
-            
-            for (const p of placed) {
-                const pLeft = p.x - p.w / 2;
-                const pRight = p.x + p.w / 2;
-                const pTop = p.y - p.h / 2;
-                const pBottom = p.y + p.h / 2;
-                
-                // Check overlap: if NOT (no overlap), then they intersect
-                const noOverlap = right <= pLeft || left >= pRight || bottom <= pTop || top >= pBottom;
-                if (!noOverlap) {
-                    return true;
-                }
-            }
-            return false;
-        };
-        
-        // Place each annotation
-        boxes.forEach(box => {
-            // Start just above the bar (y decreases going up in pixel coords)
-            let y = box.barTop - box.h / 2 - 3;
-            
-            // Move up until no intersection
-            let maxAttempts = 50;
-            while (intersectsAny(box, y) && maxAttempts > 0) {
-                y -= box.h + 3; // Move up by box height + gap
-                maxAttempts--;
-            }
-            
-            // Don't go above plot area
-            if (y - box.h / 2 < 0) {
-                y = box.h / 2 + 2;
-            }
-            
-            box.y = y;
-            placed.push(box);
-        });
-        
-        // Create Plotly annotations using paper coordinates for y to avoid log scale issues
-        const annotations = boxes.map(box => {
-            const elementColor = ELEMENT_COLORS[box.elementKey]?.fill || '#333';
-            // Convert pixel y to paper coordinates (0 = bottom, 1 = top)
-            const yPaper = 1 - (box.y / plotHeight);
-            return {
-                x: pixelToDataX(box.x),
-                y: yPaper,
+                x: d.x,  // Use kinetic energy directly
+                xref: 'x',
+                y: yOffset,
                 yref: 'paper',
-                text: box.text,
-                showarrow: false,
-                font: { size: fontSize, color: elementColor, weight: 'bold' }
+                text: d.shell,
+                showarrow: true,
+                arrowhead: 0,
+                arrowsize: 1,
+                arrowwidth: 1,
+                arrowcolor: elementColor,
+                ax: 0,
+                ay: 20 + (index % 3) * 15,  // Arrow length varies to stagger
+                font: { size: 10, color: elementColor, weight: 'bold' },
+                bgcolor: 'rgba(255,255,255,0.8)',
+                borderpad: 2
             };
         });
         
