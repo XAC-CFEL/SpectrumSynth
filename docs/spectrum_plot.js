@@ -489,16 +489,16 @@ class SpectrumPlotter {
             return null;
         }
         
-        // Find nearest photon energy in shell data (similar to calculateSpectrum)
+        // Find nearest photon energy in shell data using the photon energy directly
         if (!shellData.photon_energy || shellData.photon_energy.length === 0) {
             return null;
         }
         
         let nearestIndex = 0;
-        let minDiff = Math.abs(shellData.photon_energy[0] - kineticEnergy);
+        let minDiff = Math.abs(shellData.photon_energy[0] - photonEnergy);
         
         for (let i = 1; i < shellData.photon_energy.length; i++) {
-            const diff = Math.abs(shellData.photon_energy[i] - kineticEnergy);
+            const diff = Math.abs(shellData.photon_energy[i] - photonEnergy);
             if (diff < minDiff) {
                 minDiff = diff;
                 nearestIndex = i;
