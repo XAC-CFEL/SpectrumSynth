@@ -103,6 +103,29 @@ def build_element_data():
         "binding_energies": krypton_binding,
         "shell_data": [df_to_shell_data(df) for df in krypton_shells]
     }
+
+    #Xenon
+    xenon_binding = {
+        "M1 3s": 1148.7, "M2 3p1/2": 1002.1, "M3 3p3/2": 940.6, "M4 3d3/2": 689, "M5 3d5/2": 676.4,
+        "N1 4s": 213.2, "N2 4p1/2": 146.7, "N3 4p3/2": 145.5, "N4 4d3/2": 69.5, "N5 4d5/2": 67.5,
+        "O1 5s": 23.3, "O2 5p1/2": 13.4, "O3 5p3/2": 12.1
+    }
+    xe3s = safe_read_csv("xe3s.txt")
+    xe3p = safe_read_csv("xe3p.txt")
+    xe3d = safe_read_csv("xe3d.txt")
+    xe4s = safe_read_csv("xe4s.txt")
+    xe4p = safe_read_csv("xe4p.txt")
+    xe4d = safe_read_csv("xe4d.txt")
+    xe5s = safe_read_csv("xe5s.txt")
+    xe5p = safe_read_csv("xe5p.txt")
+    xenon_shells = [xe3s, xe3p, xe3p, xe3d, xe3d, xe4s, xe4p, xe4p, xe4p, xe4d, xe4d, xe5s, xe5p, xe5p]
+
+    elements["xenon"] = {
+        "name": "Xenon",
+        "symbol": "Xe",
+        "binding_energies": xenon_binding,
+        "shell_data": [df_to_shell_data(df) for df in xenon_shells]
+    }
     
     return elements
 

@@ -441,20 +441,36 @@ class SpectrumPlotter {
                 <h4 style="color: ${color}; border-bottom: 2px solid ${color}; padding-bottom: 5px;">${element.name}</h4>
                 <div class="binding-grid">`;
             
-            Object.entries(element.binding_energies).forEach(([shell, energy], shellIndex) => {
-                // Get beta value from shell data
+            Object.entries(element.binding_energies).forEach(([shell, bindingEnergy], shellIndex) => {
                 const shellData = element.shell_data[Math.min(shellIndex, element.shell_data.length - 1)];
-                let beta = 'N/A';
-                if (shellData && shellData.beta0 && shellData.beta0.length > 0) {
-                    // Use the middle value of beta as representative
-                    const midIndex = Math.floor(shellData.beta0.length / 2);
-                    beta = shellData.beta0[midIndex].toFixed(2);
+                
+                // Calculate beta for each selected photon energy
+                let betaDisplay = 'N/A';
+                if (shellData && shellData.beta0 && shellData.beta0.length > 0 && this.selectedPhotonEnergies.length > 0) {
+                    if (this.selectedPhotonEnergies.length === 1) {
+                        // Single energy: show one beta value
+                        const photonEnergy = this.selectedPhotonEnergies[0];
+                        const beta = this.getBetaForEnergy(shellData, photonEnergy, bindingEnergy);
+                        betaDisplay = beta !== null ? beta.toFixed(2) : 'N/A';
+                    } else {
+                        // Multiple energies: show color-coded beta values
+                        const betaValues = this.selectedPhotonEnergies.map((photonEnergy, energyIndex) => {
+                            const beta = this.getBetaForEnergy(shellData, photonEnergy, bindingEnergy);
+                            if (beta !== null) {
+                                const energyColors = ENERGY_COLORS[energyIndex % ENERGY_COLORS.length];
+                                return `<span style="color: ${energyColors.fill}; font-weight: bold;">β${energyIndex + 1} = ${beta.toFixed(2)}</span>`;
+                            }
+                            return null;
+                        }).filter(v => v !== null);
+                        
+                        betaDisplay = betaValues.length > 0 ? betaValues.join(' | ') : 'N/A';
+                    }
                 }
                 
                 html += `<div class="binding-item">
                             <span class="shell">${shell}</span>
-                            <span class="energy">${energy} eV</span>
-                            <span class="beta">β = ${beta}</span>
+                            <span class="energy">${bindingEnergy} eV</span>
+                            <span class="beta">${this.selectedPhotonEnergies.length === 1 ? 'β = ' : ''}${betaDisplay}</span>
                          </div>`;
             });
             
@@ -462,6 +478,34 @@ class SpectrumPlotter {
         });
         
         bindingList.innerHTML = html;
+    }
+    
+    getBetaForEnergy(shellData, photonEnergy, bindingEnergy) {
+        // Calculate kinetic energy for this shell at the given photon energy
+        const kineticEnergy = photonEnergy - bindingEnergy - this.currentRet;
+        
+        // Only valid if kinetic energy is positive
+        if (kineticEnergy <= 0) {
+            return null;
+        }
+        
+        // Find nearest photon energy in shell data (similar to calculateSpectrum)
+        if (!shellData.photon_energy || shellData.photon_energy.length === 0) {
+            return null;
+        }
+        
+        let nearestIndex = 0;
+        let minDiff = Math.abs(shellData.photon_energy[0] - kineticEnergy);
+        
+        for (let i = 1; i < shellData.photon_energy.length; i++) {
+            const diff = Math.abs(shellData.photon_energy[i] - kineticEnergy);
+            if (diff < minDiff) {
+                minDiff = diff;
+                nearestIndex = i;
+            }
+        }
+        
+        return shellData.beta0[nearestIndex] || null;
     }
     
     calculateSpectrum(elementKey, photonEnergy) {
@@ -666,6 +710,13 @@ class SpectrumPlotter {
             hovermode: 'closest',
             template: 'plotly_white',
             showlegend: true,
+            legend: {
+                orientation: window.innerWidth < 768 ? 'h' : 'v',
+                y: window.innerWidth < 768 ? -0.2 : 1,
+                x: window.innerWidth < 768 ? 0.5 : 1,
+                xanchor: window.innerWidth < 768 ? 'center' : 'left',
+                yanchor: window.innerWidth < 768 ? 'top' : 'top'
+            },
             barmode: 'group'
         };
         
@@ -690,6 +741,10 @@ class SpectrumPlotter {
             
             // Sum of all Gaussians
             const totalY = new Array(numPoints).fill(0);
+            
+            // Store individual Gaussian curves for recalculation
+            this.gaussianCurves = [];
+            this.gaussianXValues = xGauss;
             
             // Group peaks by element and energy for coloring
             const combinedPeaks = {};
@@ -737,6 +792,13 @@ class SpectrumPlotter {
                     ? `${element.name} @ ${combo.photonEnergy} eV Gaussian`
                     : `${element.name} Gaussian`;
                 
+                // Store this curve for Total recalculation
+                this.gaussianCurves.push({
+                    yValues: [...elementY],
+                    elementKey: combo.elementKey,
+                    photonEnergy: combo.photonEnergy
+                });
+                
                 traces.push({
                     x: xGauss,
                     y: elementY,
@@ -745,7 +807,8 @@ class SpectrumPlotter {
                     name: traceName,
                     line: { color: hexToRgba(colors.fill, 0.8), width: 2 },
                     showlegend: false,
-                    hoverinfo: 'skip'
+                    hoverinfo: 'skip',
+                    meta: { elementKey: combo.elementKey, photonEnergy: combo.photonEnergy, isGaussian: true }
                 });
             });
             
@@ -760,7 +823,8 @@ class SpectrumPlotter {
                 line: { color: blackRgba, width: 2 },
                 showlegend: true,
                 hovertemplate: 'Kinetic Energy: %{x:.1f} eV<br>Intensity: %{y:.3f}<extra>Total</extra>',
-                connectgaps: false
+                connectgaps: false,
+                meta: { isTotal: true }
             });
         }
         
@@ -795,20 +859,93 @@ class SpectrumPlotter {
             if (trace.meta) {
                 const { elementKey, photonEnergy } = trace.meta;
                 const isVisible = trace.visible === true || trace.visible === undefined;
+                const newVisibility = isVisible ? 'legendonly' : true;
                 
-                if (isVisible) {
-                    // Will become hidden
-                    this.visibleElements.delete(elementKey);
-                    this.visibleEnergies.delete(photonEnergy);
+                // Also toggle corresponding Gaussian trace
+                const gaussianIndex = eventData.data.findIndex((t, i) => 
+                    i !== clickedIndex && 
+                    t.meta?.elementKey === elementKey && 
+                    t.meta?.photonEnergy === photonEnergy && 
+                    t.meta?.isGaussian
+                );
+                
+                if (gaussianIndex !== -1) {
+                    // Use restyle to update visibility of the Gaussian trace
+                    setTimeout(() => {
+                        Plotly.restyle('spectrum-plot', { visible: newVisibility }, [gaussianIndex]).then(() => {
+                            // Update visibility tracking AFTER the toggle completes
+                            if (isVisible) {
+                                // Will become hidden
+                                this.visibleElements.delete(elementKey);
+                                this.visibleEnergies.delete(photonEnergy);
+                            } else {
+                                // Will become visible
+                                this.visibleElements.add(elementKey);
+                                this.visibleEnergies.add(photonEnergy);
+                            }
+                            
+                            // Recalculate Total trace to exclude hidden Gaussians
+                            this.updateTotalTrace();
+                            this.updateAnnotationVisibility();
+                        });
+                    }, 100);
                 } else {
-                    // Will become visible
-                    this.visibleElements.add(elementKey);
-                    this.visibleEnergies.add(photonEnergy);
+                    // No Gaussian trace, just update visibility tracking
+                    if (isVisible) {
+                        this.visibleElements.delete(elementKey);
+                        this.visibleEnergies.delete(photonEnergy);
+                    } else {
+                        this.visibleElements.add(elementKey);
+                        this.visibleEnergies.add(photonEnergy);
+                    }
+                    setTimeout(() => this.updateAnnotationVisibility(), 50);
                 }
             }
-            
-            setTimeout(() => this.updateAnnotationVisibility(), 50);
         });
+    }
+    
+    updateTotalTrace() {
+        // Recalculate the Total trace based on currently visible Gaussian traces
+        if (!this.gaussianCurves || !this.gaussianXValues) {
+            return;
+        }
+        
+        const plotDiv = document.getElementById('spectrum-plot');
+        if (!plotDiv || !plotDiv.data) {
+            return;
+        }
+        
+        // Sum only visible Gaussian curves
+        const numPoints = this.gaussianXValues.length;
+        const totalY = new Array(numPoints).fill(0);
+        
+        // Check actual trace visibility from the plot
+        plotDiv.data.forEach((trace, index) => {
+            if (trace.meta?.isGaussian) {
+                // Check if this trace is actually visible
+                const isVisible = trace.visible === true || trace.visible === undefined;
+                if (isVisible) {
+                    // Find the corresponding curve data
+                    const curve = this.gaussianCurves.find(c => 
+                        c.elementKey === trace.meta.elementKey && 
+                        c.photonEnergy === trace.meta.photonEnergy
+                    );
+                    if (curve) {
+                        for (let i = 0; i < numPoints; i++) {
+                            totalY[i] += curve.yValues[i];
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Find the Total trace index
+        const totalIndex = plotDiv.data.findIndex(t => t.meta?.isTotal);
+        
+        if (totalIndex !== -1) {
+            // Update the Total trace y-values
+            Plotly.restyle('spectrum-plot', { y: [totalY] }, [totalIndex]);
+        }
     }
     
     updateAnnotationVisibility() {
