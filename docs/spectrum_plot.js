@@ -35,7 +35,6 @@ class SpectrumPlotter {
             photonEnergies: [1486.6],
             ret: 0,
             logScale: false, // Default to linear scale
-            showAnnotations: true,
             showGaussians: false,
             gaussianWidth: 2.0
         };
@@ -65,7 +64,6 @@ class SpectrumPlotter {
                 }
                 this.currentRet = settings.ret || this.defaults.ret;
                 this.logScale = settings.logScale !== undefined ? settings.logScale : this.defaults.logScale;
-                this.showAnnotations = settings.showAnnotations !== undefined ? settings.showAnnotations : this.defaults.showAnnotations;
                 this.showGaussians = settings.showGaussians !== undefined ? settings.showGaussians : this.defaults.showGaussians;
                 this.gaussianWidth = settings.gaussianWidth !== undefined ? settings.gaussianWidth : this.defaults.gaussianWidth;
                 console.log('Loaded settings from cache:', settings);
@@ -83,7 +81,6 @@ class SpectrumPlotter {
         this.selectedPhotonEnergies = [...this.defaults.photonEnergies];
         this.currentRet = this.defaults.ret;
         this.logScale = this.defaults.logScale;
-        this.showAnnotations = this.defaults.showAnnotations;
         this.showGaussians = this.defaults.showGaussians;
         this.gaussianWidth = this.defaults.gaussianWidth;
     }
@@ -95,7 +92,6 @@ class SpectrumPlotter {
                 photonEnergies: this.selectedPhotonEnergies,
                 ret: this.currentRet,
                 logScale: this.logScale,
-                showAnnotations: this.showAnnotations,
                 showGaussians: this.showGaussians,
                 gaussianWidth: this.gaussianWidth
             };
@@ -131,9 +127,6 @@ class SpectrumPlotter {
         
         // Update scale toggle buttons
         this.updateScaleButtons();
-        
-        // Update annotations toggle buttons
-        this.updateAnnotationsButtons();
         
         // Update gaussians toggle buttons
         this.updateGaussiansButtons();
@@ -269,19 +262,6 @@ class SpectrumPlotter {
         }
     }
     
-    updateAnnotationsButtons() {
-        const onBtn = document.getElementById('annotations-on-btn');
-        const offBtn = document.getElementById('annotations-off-btn');
-        
-        if (this.showAnnotations) {
-            onBtn.classList.add('active');
-            offBtn.classList.remove('active');
-        } else {
-            offBtn.classList.add('active');
-            onBtn.classList.remove('active');
-        }
-    }
-    
     updateGaussiansButtons() {
         const onBtn = document.getElementById('gaussians-on-btn');
         const offBtn = document.getElementById('gaussians-off-btn');
@@ -354,21 +334,6 @@ class SpectrumPlotter {
             this.updateScaleButtons();
             this.saveToCache();
             this.updateYAxisOnly();
-        });
-        
-        // Annotations toggle
-        document.getElementById('annotations-on-btn').addEventListener('click', () => {
-            this.showAnnotations = true;
-            this.updateAnnotationsButtons();
-            this.saveToCache();
-            this.updateAnnotationVisibility();
-        });
-        
-        document.getElementById('annotations-off-btn').addEventListener('click', () => {
-            this.showAnnotations = false;
-            this.updateAnnotationsButtons();
-            this.saveToCache();
-            Plotly.relayout('spectrum-plot', { annotations: [] });
         });
         
         // Gaussians toggle
@@ -830,26 +795,12 @@ class SpectrumPlotter {
         
         Plotly.newPlot('spectrum-plot', traces, layout, config);
         
-        // Store spectrum data for annotation updates
+        // Store spectrum data
         this.currentSpectrumData = allSpectrumData;
         
-        // Add annotations for shell labels
-        this.addShellAnnotations(allSpectrumData);
-        
-        // Listen for plot changes to recalculate annotations
+        // Listen for plot changes
         const plotDiv = document.getElementById('spectrum-plot');
-        plotDiv.removeAllListeners?.('plotly_relayout');
         plotDiv.removeAllListeners?.('plotly_legendclick');
-        
-        plotDiv.on('plotly_relayout', (eventData) => {
-            if (this._updatingAnnotations) return;
-            if (eventData && (eventData['xaxis.range[0]'] !== undefined || 
-                              eventData['yaxis.range[0]'] !== undefined ||
-                              eventData['xaxis.autorange'] !== undefined ||
-                              eventData['yaxis.autorange'] !== undefined)) {
-                this.repositionAnnotations();
-            }
-        });
         
         plotDiv.on('plotly_legendclick', (eventData) => {
             const clickedIndex = eventData.curveNumber;
@@ -886,7 +837,6 @@ class SpectrumPlotter {
                             
                             // Recalculate Total trace to exclude hidden Gaussians
                             this.updateTotalTrace();
-                            this.updateAnnotationVisibility();
                         });
                     }, 100);
                 } else {
@@ -898,7 +848,6 @@ class SpectrumPlotter {
                         this.visibleElements.add(elementKey);
                         this.visibleEnergies.add(photonEnergy);
                     }
-                    setTimeout(() => this.updateAnnotationVisibility(), 50);
                 }
             }
         });
@@ -946,86 +895,6 @@ class SpectrumPlotter {
             // Update the Total trace y-values
             Plotly.restyle('spectrum-plot', { y: [totalY] }, [totalIndex]);
         }
-    }
-    
-    updateAnnotationVisibility() {
-        // Don't show annotations if toggle is off
-        if (!this.showAnnotations) {
-            Plotly.relayout('spectrum-plot', { annotations: [] });
-            return;
-        }
-        // Filter spectrum data to only include visible elements and energies
-        const visibleData = this.currentSpectrumData.filter(d => 
-            this.visibleElements.has(d.elementKey) && this.visibleEnergies.has(d.photonEnergy)
-        );
-        this.addShellAnnotations(visibleData);
-    }
-    
-    addShellAnnotations(spectrumData) {
-        // Simple annotation placement: just put labels above each bar
-        if (spectrumData.length === 0 || !this.showAnnotations) {
-            Plotly.relayout('spectrum-plot', { annotations: [] });
-            return;
-        }
-        
-        // Filter to only peaks with positive kinetic energy
-        const validData = spectrumData.filter(d => d.x >= 1.0);
-        
-        if (validData.length === 0) {
-            Plotly.relayout('spectrum-plot', { annotations: [] });
-            return;
-        }
-        
-        // Sort by x position (kinetic energy) descending for overlap handling
-        validData.sort((a, b) => b.x - a.x);
-        
-        // Simple annotations: place each label directly above its bar
-        // Use yref='paper' for consistent positioning
-        const annotations = validData.map((d, index) => {
-            const elementColor = ELEMENT_COLORS[d.elementKey]?.fill || '#333';
-            
-            // Stagger y position slightly to avoid overlap (alternating heights)
-            const yOffset = 1.02 + (index % 3) * 0.04;
-            
-            return {
-                x: d.x,  // Use kinetic energy directly
-                xref: 'x',
-                y: yOffset,
-                yref: 'paper',
-                text: d.shell,
-                showarrow: true,
-                arrowhead: 0,
-                arrowsize: 1,
-                arrowwidth: 1,
-                arrowcolor: elementColor,
-                ax: 0,
-                ay: 20 + (index % 3) * 15,  // Arrow length varies to stagger
-                font: { size: 10, color: elementColor, weight: 'bold' },
-                bgcolor: 'rgba(255,255,255,0.8)',
-                borderpad: 2
-            };
-        });
-        
-        this._updatingAnnotations = true;
-        Plotly.relayout('spectrum-plot', { annotations: annotations }).then(() => {
-            this._updatingAnnotations = false;
-        }).catch(() => {
-            this._updatingAnnotations = false;
-        });
-    }
-    
-    repositionAnnotations() {
-        // Debounce to avoid too many recalculations
-        if (this._repositionTimeout) {
-            clearTimeout(this._repositionTimeout);
-        }
-        this._repositionTimeout = setTimeout(() => {
-            // Filter by visible elements and energies
-            const visibleData = this.currentSpectrumData.filter(d => 
-                this.visibleElements.has(d.elementKey) && this.visibleEnergies.has(d.photonEnergy)
-            );
-            this.addShellAnnotations(visibleData);
-        }, 50);
     }
     
     updateYAxisOnly() {
