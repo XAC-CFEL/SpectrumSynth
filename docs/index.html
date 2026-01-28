@@ -16,65 +16,145 @@
     </header>
 
     <main class="container">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="spectrum">Spectrum + Element Info</button>
+            <button class="tab-btn" data-tab="setup">Setup</button>
+            <button class="tab-btn" data-tab="about">About</button>
+        </div>
 
+        <!-- Tab Content -->
+        <div class="tab-content active" id="spectrum-tab">
+            <section class="plot-area full-width">
+                <div id="spectrum-plot"></div>
+            </section>
 
-        <section class="plot-area">
-            <div id="spectrum-plot"></div>
-        </section>
+            <section class="element-info">
+                <div id="binding-energies">
+                    <div id="binding-list"></div>
+                </div>
+            </section>
+        </div>
 
-        <section class="element-info">
-            <div id="binding-energies">
-                <div id="binding-list"></div>
-            </div>
-        </section>
-
-        <section class="controls">
-            <div class="control-panel">
-                <div class="control-group element-control">
-                    <label>Selected Elements:</label>
-                    <div id="selected-elements" class="selected-elements"></div>
-                    <div class="add-element-row">
-                        <select id="add-element-select">
-                            <option value="">Add element...</option>
-                        </select>
+        <div class="tab-content" id="setup-tab">
+            <section class="controls">
+                <h3>Element Selection</h3>
+                <div class="control-panel">
+                    <div class="control-group element-control">
+                        <label>Selected Elements:</label>
+                        <div id="selected-elements" class="selected-elements"></div>
+                        <div class="add-element-row">
+                            <select id="add-element-select">
+                                <option value="">Add element...</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="control-group energy-control">
-                    <label>Photon Energies (eV):</label>
-                    <div id="selected-energies" class="selected-energies"></div>
-                    <div class="add-energy-row">
-                        <input type="number" id="add-energy-input" placeholder="Enter energy..." min="10" max="100000" step="0.1">
-                        <button id="add-energy-btn" class="add-btn">Add</button>
+                <div id="gas-multipliers-section">
+                    <h4>Gas Multipliers</h4>
+                    <p class="section-description">Scale the cross-sections for each gas</p>
+                    <div id="gas-multipliers" class="multiplier-grid"></div>
+                </div>
+            </section>
+            
+            <section class="controls">
+                <h3>Photon Energy Settings</h3>
+                <div class="control-panel">
+                    <div class="control-group energy-control">
+                        <label>Photon Energies (eV):</label>
+                        <div id="selected-energies" class="selected-energies"></div>
+                        <div class="add-energy-row">
+                            <input type="number" id="add-energy-input" placeholder="Enter energy..." min="10" max="100000" step="0.1">
+                            <button id="add-energy-btn" class="add-btn">Add</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="control-group">
-                    <label>Y-Axis Scale:</label>
-                    <div class="toggle-group">
-                        <button id="log-scale-btn" class="toggle-btn active">Log</button>
-                        <button id="lin-scale-btn" class="toggle-btn">Linear</button>
+                <div id="energy-multipliers-section">
+                    <h4>Energy Multipliers</h4>
+                    <p class="section-description">Scale the cross-sections for each photon energy</p>
+                    <div id="energy-multipliers" class="multiplier-grid"></div>
+                </div>
+            </section>
+            
+            <section class="controls">
+                <h3>Display Options</h3>
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label>Y-Axis Scale:</label>
+                        <div class="toggle-group">
+                            <button id="log-scale-btn" class="toggle-btn active">Log</button>
+                            <button id="lin-scale-btn" class="toggle-btn">Linear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Gaussians:</label>
+                        <div class="toggle-group">
+                            <button id="gaussians-on-btn" class="toggle-btn">On</button>
+                            <button id="gaussians-off-btn" class="toggle-btn active">Off</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group" id="gaussian-width-group" style="display: none;">
+                        <label for="gaussian-width-input">Gaussian Width (%):</label>
+                        <input type="number" id="gaussian-width-input" value="1.0" min="0.1" max="20" step="0.1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Peak Annotations:</label>
+                        <div class="toggle-group">
+                            <button id="annotations-on-btn" class="toggle-btn active">On</button>
+                            <button id="annotations-off-btn" class="toggle-btn">Off</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="control-group">
-                    <label>Gaussians:</label>
-                    <div class="toggle-group">
-                        <button id="gaussians-on-btn" class="toggle-btn">On</button>
-                        <button id="gaussians-off-btn" class="toggle-btn active">Off</button>
-                    </div>
-                </div>
-                
-                <div class="control-group" id="gaussian-width-group" style="display: none;">
-                    <label for="gaussian-width-input">Gaussian Width (eV):</label>
-                    <input type="number" id="gaussian-width-input" value="2.0" min="0.1" max="50" step="0.1">
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="cache-section">
-            <button id="clear-cache-btn" class="clear-cache-btn">Clear Saved Settings</button>
-        </section>
+            <section class="cache-section">
+                <button id="clear-cache-btn" class="clear-cache-btn">Clear Saved Settings</button>
+            </section>
+        </div>
+
+        <div class="tab-content" id="about-tab">
+            <section class="about-content">
+                <h2>About SpectrumSynth</h2>
+                <p>SpectrumSynth is an helper tool for X-ray Photoelectron Spectroscopy (XPS) analysis. It allows you to estimate and visualize XPS spectra for various noble gases. It does not substitute a proper analysis!</p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li>Interactive spectrum visualization with multiple elements and photon energies</li>
+                    <li>Gaussian peak fitting with percentage width</li>
+                    <li>Adjustable multipliers for gases and photon energies</li>
+                    <li>Persistent settings using browser local storage</li>
+                </ul>
+                
+                <h3>How to Use</h3>
+                <ul>
+                    <li><strong>Setup Tab:</strong> Select elements, add photon energies, and adjust multipliers and display options</li>
+                    <li><strong>Spectrum Tab:</strong> View the interactive spectrum and binding energy information</li>
+                    <li>Click on legend items to show/hide traces</li>
+                    <li>Zoom and pan the plot using mouse controls</li>
+                </ul>
+                
+                <h3>Methodology</h3>
+                <p>The tool calculates XPS spectra using:</p>
+                <ul>
+                    <li>Photoionization cross-sections from tabulated data</li>
+                    <li>Beta asymmetry parameters for angular distribution</li>
+                    <li>Kinetic energy: KE = hν - BE - φ (work function)</li>
+                    <li>Optional Gaussian convolution for peak broadening</li>
+                </ul>
+                
+                <h3>Credits</h3>
+                <ul>
+                    <li>Developed by Moritz Zander with a great amount of data searched and found by Markus Braune</li>
+                    <li>XPS cross-section data from elettra</li>
+                    <li>Ionisation energy data from NIST</li>
+                </ul>
+            </section>
+        </div>
     </main>
 
     <footer>

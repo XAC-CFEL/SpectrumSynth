@@ -36,7 +36,10 @@ class SpectrumPlotter {
             ret: 0,
             logScale: false, // Default to linear scale
             showGaussians: false,
-            gaussianWidth: 2.0
+            gaussianWidth: 1.0, // Default 1% of energy
+            showAnnotations: true,
+            gasMultipliers: {},
+            energyMultipliers: {}
         };
         
         // Load from cache or use defaults
@@ -66,6 +69,9 @@ class SpectrumPlotter {
                 this.logScale = settings.logScale !== undefined ? settings.logScale : this.defaults.logScale;
                 this.showGaussians = settings.showGaussians !== undefined ? settings.showGaussians : this.defaults.showGaussians;
                 this.gaussianWidth = settings.gaussianWidth !== undefined ? settings.gaussianWidth : this.defaults.gaussianWidth;
+                this.showAnnotations = settings.showAnnotations !== undefined ? settings.showAnnotations : this.defaults.showAnnotations;
+                this.gasMultipliers = settings.gasMultipliers || {};
+                this.energyMultipliers = settings.energyMultipliers || {};
                 console.log('Loaded settings from cache:', settings);
             } else {
                 this.useDefaults();
@@ -83,6 +89,9 @@ class SpectrumPlotter {
         this.logScale = this.defaults.logScale;
         this.showGaussians = this.defaults.showGaussians;
         this.gaussianWidth = this.defaults.gaussianWidth;
+        this.showAnnotations = this.defaults.showAnnotations;
+        this.gasMultipliers = {};
+        this.energyMultipliers = {};
     }
     
     saveToCache() {
@@ -93,7 +102,10 @@ class SpectrumPlotter {
                 ret: this.currentRet,
                 logScale: this.logScale,
                 showGaussians: this.showGaussians,
-                gaussianWidth: this.gaussianWidth
+                gaussianWidth: this.gaussianWidth,
+                showAnnotations: this.showAnnotations,
+                gasMultipliers: this.gasMultipliers,
+                energyMultipliers: this.energyMultipliers
             };
             localStorage.setItem(CACHE_KEY, JSON.stringify(settings));
         } catch (e) {
@@ -130,6 +142,13 @@ class SpectrumPlotter {
         
         // Update gaussians toggle buttons
         this.updateGaussiansButtons();
+        
+        // Update annotations toggle buttons
+        this.updateAnnotationsButtons();
+        
+        // Update multiplier inputs
+        this.updateGasMultipliers();
+        this.updateEnergyMultipliers();
     }
     
     updateSelectedElementsDisplay() {
@@ -181,9 +200,14 @@ class SpectrumPlotter {
     addElement(elementKey) {
         if (elementKey && !this.selectedElements.includes(elementKey)) {
             this.selectedElements.push(elementKey);
+            // Initialize multiplier if not set
+            if (!this.gasMultipliers[elementKey]) {
+                this.gasMultipliers[elementKey] = 1.0;
+            }
             this.saveToCache();
             this.updateSelectedElementsDisplay();
             this.updateAddElementDropdown();
+            this.updateGasMultipliers();
             this.updateBindingEnergies();
             this.plotSpectrum();
         }
@@ -196,6 +220,7 @@ class SpectrumPlotter {
             this.saveToCache();
             this.updateSelectedElementsDisplay();
             this.updateAddElementDropdown();
+            this.updateGasMultipliers();
             this.updateBindingEnergies();
             this.plotSpectrum();
         }
@@ -231,8 +256,13 @@ class SpectrumPlotter {
         const energyNum = parseFloat(energy);
         if (!isNaN(energyNum) && energyNum > 0 && !this.selectedPhotonEnergies.includes(energyNum)) {
             this.selectedPhotonEnergies.push(energyNum);
+            // Initialize multiplier if not set
+            if (!this.energyMultipliers[energyNum]) {
+                this.energyMultipliers[energyNum] = 1.0;
+            }
             this.saveToCache();
             this.updateSelectedEnergiesDisplay();
+            this.updateEnergyMultipliers();
             this.updateBindingEnergies();
             this.plotSpectrum();
         }
@@ -244,6 +274,7 @@ class SpectrumPlotter {
             this.selectedPhotonEnergies.splice(index, 1);
             this.saveToCache();
             this.updateSelectedEnergiesDisplay();
+            this.updateEnergyMultipliers();
             this.updateBindingEnergies();
             this.plotSpectrum();
         }
@@ -278,11 +309,127 @@ class SpectrumPlotter {
         }
     }
     
+    updateAnnotationsButtons() {
+        const onBtn = document.getElementById('annotations-on-btn');
+        const offBtn = document.getElementById('annotations-off-btn');
+        
+        if (this.showAnnotations) {
+            onBtn?.classList.add('active');
+            offBtn?.classList.remove('active');
+        } else {
+            offBtn?.classList.add('active');
+            onBtn?.classList.remove('active');
+        }
+    }
+    
+    updateGasMultipliers() {
+        const container = document.getElementById('gas-multipliers');
+        if (!container) return;
+        
+        if (this.selectedElements.length === 0) {
+            container.innerHTML = '<p class="no-elements">No elements selected</p>';
+            return;
+        }
+        
+        container.innerHTML = this.selectedElements.map(elementKey => {
+            const element = ELEMENTS_DATA[elementKey];
+            const color = ELEMENT_COLORS[elementKey]?.fill || '#667eea';
+            const multiplier = this.gasMultipliers[elementKey] || 1.0;
+            
+            return `<div class="multiplier-item">
+                <label class="multiplier-label">
+                    <span class="multiplier-color" style="background-color: ${color}"></span>
+                    ${element.name}
+                </label>
+                <input type="number" class="multiplier-input gas-multiplier" 
+                       data-element="${elementKey}" 
+                       value="${multiplier}" 
+                       min="0" max="100" step="0.1">
+            </div>`;
+        }).join('');
+        
+        // Add event listeners
+        container.querySelectorAll('.gas-multiplier').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const elementKey = e.target.dataset.element;
+                const value = parseFloat(e.target.value) || 1.0;
+                this.gasMultipliers[elementKey] = value;
+                this.saveToCache();
+                this.plotSpectrum();
+            });
+        });
+    }
+    
+    updateEnergyMultipliers() {
+        const container = document.getElementById('energy-multipliers');
+        if (!container) return;
+        
+        if (this.selectedPhotonEnergies.length === 0) {
+            container.innerHTML = '<p class="no-energies">No energies selected</p>';
+            return;
+        }
+        
+        container.innerHTML = this.selectedPhotonEnergies.map((energy, index) => {
+            const color = ENERGY_COLORS[index % ENERGY_COLORS.length]?.fill || '#667eea';
+            const multiplier = this.energyMultipliers[energy] || 1.0;
+            
+            return `<div class="multiplier-item">
+                <label class="multiplier-label">
+                    <span class="multiplier-color" style="background-color: ${color}"></span>
+                    ${energy} eV
+                </label>
+                <input type="number" class="multiplier-input energy-multiplier" 
+                       data-energy="${energy}" 
+                       value="${multiplier}" 
+                       min="0" max="100" step="0.1">
+            </div>`;
+        }).join('');
+        
+        // Add event listeners
+        container.querySelectorAll('.energy-multiplier').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const energy = parseFloat(e.target.dataset.energy);
+                const value = parseFloat(e.target.value) || 1.0;
+                this.energyMultipliers[energy] = value;
+                this.saveToCache();
+                this.plotSpectrum();
+            });
+        });
+    }
+    
     init() {
+        this.setupTabs();
         this.applySettingsToUI();
         this.setupControls();
         this.updateBindingEnergies();
         this.plotSpectrum();
+    }
+    
+    setupTabs() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                // Remove active class from all buttons and contents
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                btn.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+                if (tabName === 'spectrum') {
+                    setTimeout(() => {
+                        const plotDiv = document.getElementById('spectrum-plot');
+                        if (plotDiv && window.Plotly) {
+                            Plotly.Plots.resize(plotDiv);
+                        }
+                    }, 50);
+                }
+            });
+        });
     }
     
     setupControls() {
@@ -368,7 +515,7 @@ class SpectrumPlotter {
         // Gaussian width input
         const gaussianWidthInput = document.getElementById('gaussian-width-input');
         gaussianWidthInput.addEventListener('change', () => {
-            this.gaussianWidth = parseFloat(gaussianWidthInput.value) || 2.0;
+            this.gaussianWidth = parseFloat(gaussianWidthInput.value) || 1.0;
             this.saveToCache();
             if (this.showGaussians) {
                 // Get current axis ranges
@@ -381,6 +528,38 @@ class SpectrumPlotter {
                 this.plotSpectrum(xRange, yRange);
             }
         });
+        
+        // Annotations toggle
+        const annotationsOnBtn = document.getElementById('annotations-on-btn');
+        const annotationsOffBtn = document.getElementById('annotations-off-btn');
+        
+        if (annotationsOnBtn && annotationsOffBtn) {
+            annotationsOnBtn.addEventListener('click', () => {
+                this.showAnnotations = true;
+                this.updateAnnotationsButtons();
+                this.saveToCache();
+                const plotDiv = document.getElementById('spectrum-plot');
+                const xaxis = plotDiv.layout?.xaxis;
+                const yaxis = plotDiv.layout?.yaxis;
+                let xRange = null, yRange = null;
+                if (xaxis && xaxis.range) xRange = [...xaxis.range];
+                if (yaxis && yaxis.range) yRange = [...yaxis.range];
+                this.plotSpectrum(xRange, yRange);
+            });
+            
+            annotationsOffBtn.addEventListener('click', () => {
+                this.showAnnotations = false;
+                this.updateAnnotationsButtons();
+                this.saveToCache();
+                const plotDiv = document.getElementById('spectrum-plot');
+                const xaxis = plotDiv.layout?.xaxis;
+                const yaxis = plotDiv.layout?.yaxis;
+                let xRange = null, yRange = null;
+                if (xaxis && xaxis.range) xRange = [...xaxis.range];
+                if (yaxis && yaxis.range) yRange = [...yaxis.range];
+                this.plotSpectrum(xRange, yRange);
+            });
+        }
         
         // Clear cache button
         document.getElementById('clear-cache-btn').addEventListener('click', () => {
@@ -477,6 +656,11 @@ class SpectrumPlotter {
         const element = ELEMENTS_DATA[elementKey];
         const ret = this.currentRet;
         
+        // Get multipliers (default to 1.0 if not set)
+        const gasMultiplier = this.gasMultipliers[elementKey] || 1.0;
+        const energyMultiplier = this.energyMultipliers[photonEnergy] || 1.0;
+        const totalMultiplier = gasMultiplier * energyMultiplier;
+        
         const spectrumData = [];
         
         // Calculate kinetic energies for each shell
@@ -501,7 +685,7 @@ class SpectrumPlotter {
                         }
                     }
                     
-                    const crossSection = shellData.cs0[nearestIndex] || 1.0;
+                    const crossSection = (shellData.cs0[nearestIndex] || 1.0) * totalMultiplier;
                     const beta = shellData.beta0[nearestIndex] || 1.5;
                     
                     spectrumData.push({
@@ -655,6 +839,51 @@ class SpectrumPlotter {
             ? `Multiple energies` 
             : `hν = ${this.selectedPhotonEnergies[0]} eV`;
         
+        // Prepare annotations for peak labels
+        const annotations = [];
+        if (this.showAnnotations && allSpectrumData.length > 0) {
+            // Group peaks by position to avoid overlaps
+            const annotationMap = new Map();
+            
+            allSpectrumData.forEach(d => {
+                const key = `${d.x.toFixed(1)}`;
+                if (!annotationMap.has(key)) {
+                    annotationMap.set(key, {
+                        x: d.x,
+                        y: d.y,
+                        shells: [d.shell],
+                        element: d.element
+                    });
+                } else {
+                    const existing = annotationMap.get(key);
+                    existing.shells.push(d.shell);
+                    if (d.y > existing.y) {
+                        existing.y = d.y;
+                        existing.element = d.element;
+                    }
+                }
+            });
+            
+            annotationMap.forEach(ann => {
+                const label = ann.shells.join(', ');
+                annotations.push({
+                    x: Math.log10(ann.x),  // Log scale for x-axis
+                    y: this.logScale ? Math.log10(ann.y) : ann.y,
+                    text: label,
+                    showarrow: false,
+                    font: {
+                        size: 10,
+                        color: '#333',
+                        family: 'Arial, sans-serif'
+                    },
+                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                    borderpad: 2,
+                    xanchor: 'center',
+                    yanchor: 'bottom'
+                });
+            });
+        }
+        
         const layout = {
             title: {
                 text: `${elementNames} XPS Spectrum (${energyStr})`,
@@ -682,7 +911,9 @@ class SpectrumPlotter {
                 xanchor: window.innerWidth < 768 ? 'center' : 'left',
                 yanchor: window.innerWidth < 768 ? 'top' : 'top'
             },
-            barmode: 'group'
+            barmode: 'group',
+            bargap: 0.05,
+            annotations: annotations
         };
         
         const config = {
@@ -694,7 +925,7 @@ class SpectrumPlotter {
         
         // Add Gaussian curves if enabled
         if (this.showGaussians && allSpectrumData.length > 0) {
-            const sigma = this.gaussianWidth / 2.355; // Convert FWHM to sigma
+            const widthPercent = this.gaussianWidth; // Percentage of energy (default 1%)
             
             // Fixed 0.1 eV steps from plotMin to plotMax
             const stepSize = 0.1;
@@ -737,6 +968,9 @@ class SpectrumPlotter {
                 combo.peaks.forEach(peak => {
                     const mu = peak.x;
                     const amplitude = peak.y;
+                    // Calculate sigma as percentage of kinetic energy
+                    const fwhm = (widthPercent / 100.0) * mu;
+                    const sigma = fwhm / 2.355; // Convert FWHM to sigma
                     
                     for (let i = 0; i < numPoints; i++) {
                         const x = xGauss[i];

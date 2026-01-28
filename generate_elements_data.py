@@ -34,6 +34,24 @@ def safe_read_csv(filename):
         })
 
 
+def scale_cross_section(df, factor):
+    """Scale cross-section values in a DataFrame by a given factor
+    
+    Args:
+        df: DataFrame with cross-section data
+        factor: Multiplicative factor to scale cs0, cs1, cs2
+    
+    Returns:
+        New DataFrame with scaled cross-sections
+    """
+    scaled_df = df.copy()
+    scaled_df["cs0"] = df["cs0"] * factor
+    scaled_df["cs1"] = df["cs1"] * factor
+    scaled_df["cs2"] = df["cs2"] * factor
+    # Note: beta values are not scaled, they're angular distribution parameters
+    return scaled_df
+
+
 def df_to_shell_data(df):
     """Convert a pandas DataFrame to shell data dictionary"""
     return {
@@ -57,7 +75,10 @@ def build_element_data():
     ne1s = safe_read_csv("ne1s.txt")
     ne2s = safe_read_csv("ne2s.txt")
     ne2p = safe_read_csv("ne2p.txt")
-    neon_shells = [ne1s, ne2s, ne2p, ne2p]
+    # Divide 2p cross-section: 2p1/2 gets 1/3, 2p3/2 gets 2/3 (based on degeneracy)
+    ne2p_1half = scale_cross_section(ne2p, 1/3)  # j=1/2 has 2 states
+    ne2p_3half = scale_cross_section(ne2p, 2/3)  # j=3/2 has 4 states
+    neon_shells = [ne1s, ne2s, ne2p_1half, ne2p_3half]
     
     elements["neon"] = {
         "name": "Neon",
@@ -75,7 +96,12 @@ def build_element_data():
     ar2p = safe_read_csv("ar2p.txt")
     ar3s = safe_read_csv("ar3s.txt")
     ar3p = safe_read_csv("ar3p.txt")
-    argon_shells = [ar2s, ar2p, ar2p, ar3s, ar3p, ar3p]
+    # Divide cross-sections for p orbitals
+    ar2p_1half = scale_cross_section(ar2p, 1/3)
+    ar2p_3half = scale_cross_section(ar2p, 2/3)
+    ar3p_1half = scale_cross_section(ar3p, 1/3)
+    ar3p_3half = scale_cross_section(ar3p, 2/3)
+    argon_shells = [ar2s, ar2p_1half, ar2p_3half, ar3s, ar3p_1half, ar3p_3half]
     
     elements["argon"] = {
         "name": "Argon",
@@ -95,7 +121,14 @@ def build_element_data():
     kr3d = safe_read_csv("kr3d.txt")
     kr4s = safe_read_csv("kr4s.txt")
     kr4p = safe_read_csv("kr4p.txt")
-    krypton_shells = [kr3s, kr3p, kr3p, kr3d, kr3d, kr4s, kr4p, kr4p]
+    # Divide cross-sections for p and d orbitals
+    kr3p_1half = scale_cross_section(kr3p, 1/3)
+    kr3p_3half = scale_cross_section(kr3p, 2/3)
+    kr3d_3half = scale_cross_section(kr3d, 2/5)  # j=3/2 has 4 states
+    kr3d_5half = scale_cross_section(kr3d, 3/5)  # j=5/2 has 6 states
+    kr4p_1half = scale_cross_section(kr4p, 1/3)
+    kr4p_3half = scale_cross_section(kr4p, 2/3)
+    krypton_shells = [kr3s, kr3p_1half, kr3p_3half, kr3d_3half, kr3d_5half, kr4s, kr4p_1half, kr4p_3half]
     
     elements["krypton"] = {
         "name": "Krypton",
@@ -118,7 +151,20 @@ def build_element_data():
     xe4d = safe_read_csv("xe4d.txt")
     xe5s = safe_read_csv("xe5s.txt")
     xe5p = safe_read_csv("xe5p.txt")
-    xenon_shells = [xe3s, xe3p, xe3p, xe3d, xe3d, xe4s, xe4p, xe4p, xe4p, xe4d, xe4d, xe5s, xe5p, xe5p]
+    # Divide cross-sections for p and d orbitals
+    xe3p_1half = scale_cross_section(xe3p, 1/3)
+    xe3p_3half = scale_cross_section(xe3p, 2/3)
+    xe3d_3half = scale_cross_section(xe3d, 2/5)
+    xe3d_5half = scale_cross_section(xe3d, 3/5)
+    xe4p_1half = scale_cross_section(xe4p, 1/3)
+    xe4p_3half = scale_cross_section(xe4p, 2/3)
+    xe4d_3half = scale_cross_section(xe4d, 2/5)
+    xe4d_5half = scale_cross_section(xe4d, 3/5)
+    xe5p_1half = scale_cross_section(xe5p, 1/3)
+    xe5p_3half = scale_cross_section(xe5p, 2/3)
+    xenon_shells = [xe3s, xe3p_1half, xe3p_3half, xe3d_3half, xe3d_5half, 
+                    xe4s, xe4p_1half, xe4p_3half, xe4d_3half, xe4d_5half, 
+                    xe5s, xe5p_1half, xe5p_3half]
 
     elements["xenon"] = {
         "name": "Xenon",

@@ -40,12 +40,76 @@ main {
     padding: 2rem 0;
 }
 
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    background: white;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: #f8f9fa;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: #e9ecef;
+    color: #0072B2;
+}
+
+.tab-btn.active {
+    background: white;
+    border-bottom-color: #0072B2;
+    color: #0072B2;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 section {
     margin-bottom: 2rem;
     background: white;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 0 0 10px 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Full width plot area */
+section.plot-area.full-width {
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+    border-radius: 0;
+    padding: 2rem 1rem;
+}
+
+#setup-tab section:first-child,
+#about-tab section {
+    border-radius: 10px;
 }
 
 h2 {
@@ -57,6 +121,515 @@ h2 {
 h3 {
     color: #E69F00;
     margin-bottom: 1rem;
+}
+
+h4 {
+    color: #0072B2;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.section-description {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Control Panel Styles */
+.control-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.control-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.control-group select {
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+    transition: border-color 0.3s ease;
+}
+
+.control-group select:focus {
+    outline: none;
+    border-color: #0072B2;
+}
+
+.control-group input[type="number"] {
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+    transition: border-color 0.3s ease;
+    width: 100%;
+}
+
+.control-group input[type="number"]:focus {
+    outline: none;
+    border-color: #0072B2;
+}
+
+.control-group input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+    transition: background 0.3s ease;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0072B2;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+    background: #E69F00;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0072B2;
+    cursor: pointer;
+    border: none;
+}
+
+/* Multiplier Grid */
+.multiplier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.multiplier-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.multiplier-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.multiplier-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.multiplier-input {
+    padding: 0.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.multiplier-input:focus {
+    outline: none;
+    border-color: #0072B2;
+}
+
+/* Toggle Button Group */
+.toggle-group {
+    display: flex;
+    gap: 0;
+}
+
+.toggle-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    background: #e9ecef;
+    border: 2px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.toggle-btn:first-child {
+    border-radius: 6px 0 0 6px;
+    border-right: 1px solid #e0e0e0;
+}
+
+.toggle-btn:last-child {
+    border-radius: 0 6px 6px 0;
+    border-left: 1px solid #e0e0e0;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #0072B2 0%, #E69F00 100%);
+    color: white;
+    border-color: #0072B2;
+}
+
+.toggle-btn:hover:not(.active) {
+    background: #dee2e6;
+}
+
+/* Selected Elements */
+.element-control {
+    grid-column: 1 / -1;
+}
+
+.selected-elements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    min-height: 38px;
+    align-items: center;
+}
+
+.element-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.element-tag .remove-element {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.element-tag .remove-element:hover {
+    opacity: 1;
+}
+
+.add-element-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.add-element-row select {
+    flex: 1;
+    max-width: 250px;
+}
+
+.no-elements {
+    color: #999;
+    font-style: italic;
+}
+
+/* Selected Energies */
+.energy-control {
+    grid-column: 1 / -1;
+}
+
+.selected-energies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    min-height: 38px;
+    align-items: center;
+}
+
+.energy-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.energy-tag .remove-energy {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.energy-tag .remove-energy:hover {
+    opacity: 1;
+}
+
+.add-energy-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.add-energy-row input {
+    flex: 1;
+    max-width: 200px;
+}
+
+.add-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #0072B2 0%, #E69F00 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 114, 178, 0.3);
+}
+
+.add-btn:active {
+    transform: translateY(0);
+}
+
+.no-energies {
+    color: #999;
+    font-style: italic;
+}
+
+/* Plot Area */
+.plot-area {
+    padding: 1rem;
+}
+
+#spectrum-plot {
+    width: 100%;
+    height: 500px;
+}
+
+/* Cache Section */
+.cache-section {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.clear-cache-btn {
+    padding: 0.5rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-cache-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Element Info */
+.element-binding-section {
+    margin-bottom: 1.5rem;
+}
+
+.element-binding-section h4 {
+    margin-bottom: 0.75rem;
+}
+
+.binding-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.binding-item {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid #0072B2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.shell {
+    font-weight: 600;
+    color: #E69F00;
+    font-size: 1.1rem;
+}
+
+.energy {
+    font-family: 'Courier New', monospace;
+    background: #e9ecef;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+.beta {
+    font-family: 'Courier New', monospace;
+    color: #0072B2;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* About Content */
+.about-content {
+    line-height: 1.8;
+}
+
+.about-content h2 {
+    margin-top: 0;
+}
+
+.about-content h3 {
+    margin-top: 2rem;
+}
+
+.about-content ul,
+.about-content ol {
+    margin-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.about-content li {
+    margin-bottom: 0.5rem;
+}
+
+.about-content p {
+    margin-bottom: 1rem;
+}
+
+code {
+    background: #f1f3f4;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+footer {
+    background: #343a40;
+    color: white;
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .control-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .multiplier-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .binding-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tab-navigation {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        border-bottom: 1px solid #e0e0e0;
+        border-left: 3px solid transparent;
+    }
+    
+    .tab-btn.active {
+        border-left-color: #0072B2;
+        border-bottom-color: #e0e0e0;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    section {
+        padding: 1rem;
+    }
+}
+
+/* Loading animation */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0072B2;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Print styles */
+@media print {
+    header {
+        background: none;
+        color: black;
+    }
+    
+    .tab-navigation,
+    .control-panel,
+    .update-btn {
+        display: none;
+    }
+    
+    .tab-content {
+        display: block !important;
+    }
+    
+    #spectrum-plot {
+        page-break-inside: avoid;
+    }
 }
 
 /* Control Panel Styles */
