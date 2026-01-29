@@ -1135,15 +1135,43 @@ class SpectrumPlotter {
         if (this.showGaussians && allSpectrumData.length > 0) {
             const widthPercent = this.gaussianWidth; // Percentage of energy (default 1%)
             
-            // Fixed 0.1 eV steps from 0.1 eV (min for log scale) to max photon energy
+            // Variable step size for better resolution at low energies
+            // Define energy regions with different step sizes
             const gaussMin = 0.1;  // Minimum for log scale safety
             const gaussMax = maxPhotonEnergy;
-            const stepSize = 0.1;
-            const numPoints = Math.ceil((gaussMax - gaussMin) / stepSize) + 1;
             const xGauss = [];
-            for (let i = 0; i < numPoints; i++) {
-                xGauss.push(gaussMin + i * stepSize);
+            
+            // Create points with variable step sizes
+            // 0.1 to 10 eV: 0.02 eV steps (high resolution for low energies)
+            // 10 to 100 eV: 0.1 eV steps
+            // 100 to 1000 eV: 0.5 eV steps
+            // 1000+ eV: 2.0 eV steps
+            let currentEnergy = gaussMin;
+            
+            while (currentEnergy <= gaussMax) {
+                xGauss.push(currentEnergy);
+                
+                // Determine step size based on current energy
+                let stepSize;
+                if (currentEnergy < 10) {
+                    stepSize = 0.02;
+                } else if (currentEnergy < 100) {
+                    stepSize = 0.1;
+                } else if (currentEnergy < 1000) {
+                    stepSize = 0.5;
+                } else {
+                    stepSize = 2.0;
+                }
+                
+                currentEnergy += stepSize;
             }
+            
+            // Ensure we include the max energy
+            if (xGauss[xGauss.length - 1] < gaussMax) {
+                xGauss.push(gaussMax);
+            }
+            
+            const numPoints = xGauss.length;
             
             // Sum of all Gaussians
             const totalY = new Array(numPoints).fill(0);
