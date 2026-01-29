@@ -2819,6 +2819,48 @@ const ELEMENTS_DATA = {
           0.694
         ]
       }
+    ],
+    "auger_peaks": [
+      {
+        "peak_name": "Ne_KLL_1S0",
+        "kinetic_energy": 748.5,
+        "channel": "KLL",
+        "intensity_factor": 0.06157635467980295,
+        "origin": "1s",
+        "origin_binding_key": "1s"
+      },
+      {
+        "peak_name": "Ne_KLL_1P1",
+        "kinetic_energy": 771.0,
+        "channel": "KLL",
+        "intensity_factor": 0.16995073891625612,
+        "origin": "1s",
+        "origin_binding_key": "1s"
+      },
+      {
+        "peak_name": "Ne_KLL_3P02",
+        "kinetic_energy": 782.0,
+        "channel": "KLL",
+        "intensity_factor": 0.06773399014778325,
+        "origin": "1s",
+        "origin_binding_key": "1s"
+      },
+      {
+        "peak_name": "Ne_KLL_1S0",
+        "kinetic_energy": 800.0,
+        "channel": "KLL",
+        "intensity_factor": 0.09667487684729063,
+        "origin": "1s",
+        "origin_binding_key": "1s"
+      },
+      {
+        "peak_name": "Ne_KLL'_1D2",
+        "kinetic_energy": 803.6,
+        "channel": "KLL",
+        "intensity_factor": 0.604064039408867,
+        "origin": "1s",
+        "origin_binding_key": "1s"
+      }
     ]
   },
   "argon": {
@@ -7023,6 +7065,192 @@ const ELEMENTS_DATA = {
           1.205,
           1.201
         ]
+      }
+    ],
+    "auger_peaks": [
+      {
+        "peak_name": "Ar_LMM_10",
+        "kinetic_energy": 160.64,
+        "channel": "L23MM",
+        "intensity_factor": 0.00544069640914037,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_21",
+        "kinetic_energy": 171.6,
+        "channel": "L3MM",
+        "intensity_factor": 0.007616974972796518,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_22",
+        "kinetic_energy": 173.55,
+        "channel": "L23MM",
+        "intensity_factor": 0.006528835690968444,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_23",
+        "kinetic_energy": 173.81,
+        "channel": "L2MM",
+        "intensity_factor": 0.010438413361169102,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_24",
+        "kinetic_energy": 174.22,
+        "channel": "L23MM",
+        "intensity_factor": 0.011969532100108813,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_26",
+        "kinetic_energy": 175.76,
+        "channel": "L23MM",
+        "intensity_factor": 0.011969532100108813,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_32",
+        "kinetic_energy": 177.91,
+        "channel": "L3MM",
+        "intensity_factor": 0.036996735582154515,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_34",
+        "kinetic_energy": 178.66,
+        "channel": "L3MM",
+        "intensity_factor": 0.013057671381936888,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_35",
+        "kinetic_energy": 178.97,
+        "channel": "L3MM",
+        "intensity_factor": 0.022850924918389554,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_36",
+        "kinetic_energy": 179.48,
+        "channel": "L3MM",
+        "intensity_factor": 0.006528835690968444,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_37",
+        "kinetic_energy": 180.06,
+        "channel": "L2MM",
+        "intensity_factor": 0.037578288100208766,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_40",
+        "kinetic_energy": 181.14,
+        "channel": "L2MM",
+        "intensity_factor": 0.020876826722338204,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_45",
+        "kinetic_energy": 187.33,
+        "channel": "L3MM",
+        "intensity_factor": 0.05767138193688792,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_48",
+        "kinetic_energy": 189.49,
+        "channel": "L2MM",
+        "intensity_factor": 0.06680584551148225,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_5253",
+        "kinetic_energy": 191.16,
+        "channel": "L3MM",
+        "intensity_factor": 0.09466811751904244,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_60",
+        "kinetic_energy": 193.13,
+        "channel": "L2MM",
+        "intensity_factor": 0.07724425887265135,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_68",
+        "kinetic_energy": 196.67,
+        "channel": "L23MM",
+        "intensity_factor": 0.026115342763873776,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_72",
+        "kinetic_energy": 201.09,
+        "channel": "L23MM",
+        "intensity_factor": 0.1088139281828074,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_73",
+        "kinetic_energy": 203.23,
+        "channel": "L2MM",
+        "intensity_factor": 0.11482254697286012,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_74",
+        "kinetic_energy": 203.47,
+        "channel": "L23MM",
+        "intensity_factor": 0.29379760609357997,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_75",
+        "kinetic_energy": 205.21,
+        "channel": "L23MM",
+        "intensity_factor": 0.2959738846572361,
+        "origin": "2p3/2",
+        "origin_binding_key": "L3 2p3/2"
+      },
+      {
+        "peak_name": "Ar_LMM_76",
+        "kinetic_energy": 205.62,
+        "channel": "L2MM",
+        "intensity_factor": 0.38204592901878914,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
+      },
+      {
+        "peak_name": "Ar_LMM_78",
+        "kinetic_energy": 207.23,
+        "channel": "L2MM",
+        "intensity_factor": 0.29018789144050106,
+        "origin": "2p1/2",
+        "origin_binding_key": "L2 2p1/2"
       }
     ]
   },
@@ -12718,6 +12946,152 @@ const ELEMENTS_DATA = {
           1.594,
           1.592
         ]
+      }
+    ],
+    "auger_peaks": [
+      {
+        "peak_name": "Kr_MNN_01",
+        "kinetic_energy": 56.51,
+        "channel": "M4NN",
+        "intensity_factor": 0.02826379542395693,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_02",
+        "kinetic_energy": 55.94,
+        "channel": "M4NN",
+        "intensity_factor": 0.051144010767160165,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_03",
+        "kinetic_energy": 55.26,
+        "channel": "M5NN",
+        "intensity_factor": 0.09240246406570841,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_04",
+        "kinetic_energy": 54.7,
+        "channel": "M4NN",
+        "intensity_factor": 0.2018842530282638,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_06",
+        "kinetic_energy": 53.45,
+        "channel": "M5NN",
+        "intensity_factor": 0.14168377823408623,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_07",
+        "kinetic_energy": 52.41,
+        "channel": "M4NN",
+        "intensity_factor": 0.13458950201884254,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_10",
+        "kinetic_energy": 51.15,
+        "channel": "M5NN",
+        "intensity_factor": 0.11396303901437373,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_20",
+        "kinetic_energy": 42.14,
+        "channel": "M4NN",
+        "intensity_factor": 0.07806191117092867,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_21",
+        "kinetic_energy": 41.69,
+        "channel": "M4NN",
+        "intensity_factor": 0.013458950201884255,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_23",
+        "kinetic_energy": 40.89,
+        "channel": "M5NN",
+        "intensity_factor": 0.04722792607802875,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_24",
+        "kinetic_energy": 40.46,
+        "channel": "M5NN",
+        "intensity_factor": 0.06365503080082136,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_25",
+        "kinetic_energy": 40.19,
+        "channel": "M5NN",
+        "intensity_factor": 0.021560574948665298,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_27",
+        "kinetic_energy": 38.71,
+        "channel": "M4NN",
+        "intensity_factor": 0.2113055181695828,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_30",
+        "kinetic_energy": 37.67,
+        "channel": "M5NN",
+        "intensity_factor": 0.2166324435318275,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_35",
+        "kinetic_energy": 32.14,
+        "channel": "M4NN",
+        "intensity_factor": 0.1749663526244953,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_40",
+        "kinetic_energy": 30.89,
+        "channel": "M5NN",
+        "intensity_factor": 0.18583162217659138,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
+      },
+      {
+        "peak_name": "Kr_MNN_51",
+        "kinetic_energy": 25.23,
+        "channel": "M4NN",
+        "intensity_factor": 0.1063257065948856,
+        "origin": "3d3/2",
+        "origin_binding_key": "3d3/2"
+      },
+      {
+        "peak_name": "Kr_MNN_52",
+        "kinetic_energy": 23.98,
+        "channel": "M5NN",
+        "intensity_factor": 0.11704312114989732,
+        "origin": "3d5/2",
+        "origin_binding_key": "3d5/2"
       }
     ]
   },
@@ -19604,6 +19978,296 @@ const ELEMENTS_DATA = {
           1.699,
           1.699
         ]
+      }
+    ],
+    "auger_peaks": [
+      {
+        "peak_name": "Xe_NOO_01",
+        "kinetic_energy": 36.422,
+        "channel": "N4OO",
+        "intensity_factor": 0.02669039145907473,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_02",
+        "kinetic_energy": 35.208,
+        "channel": "N4OO",
+        "intensity_factor": 0.07651245551601424,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_03",
+        "kinetic_energy": 34.443,
+        "channel": "N5OO",
+        "intensity_factor": 0.10487804878048781,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_04",
+        "kinetic_energy": 34.302,
+        "channel": "N4OO",
+        "intensity_factor": 0.18505338078291816,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_05",
+        "kinetic_energy": 33.435,
+        "channel": "N5OO",
+        "intensity_factor": 0.05853658536585366,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_06",
+        "kinetic_energy": 33.229,
+        "channel": "N5OO",
+        "intensity_factor": 0.047560975609756105,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_07",
+        "kinetic_energy": 32.323,
+        "channel": "N5OO",
+        "intensity_factor": 0.11829268292682928,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_08",
+        "kinetic_energy": 31.946,
+        "channel": "N4OO",
+        "intensity_factor": 0.17793594306049823,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_09",
+        "kinetic_energy": 29.97,
+        "channel": "N5OO",
+        "intensity_factor": 0.08902439024390245,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_16",
+        "kinetic_energy": 21.67,
+        "channel": "N4OO",
+        "intensity_factor": 0.11032028469750889,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_18",
+        "kinetic_energy": 19.69,
+        "channel": "N5OO",
+        "intensity_factor": 0.09756097560975611,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_22",
+        "kinetic_energy": 17.25,
+        "channel": "N4OO",
+        "intensity_factor": 0.07295373665480427,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_24",
+        "kinetic_energy": 16.15,
+        "channel": "N4OO",
+        "intensity_factor": 0.1601423487544484,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_25",
+        "kinetic_energy": 15.27,
+        "channel": "N5OO",
+        "intensity_factor": 0.0902439024390244,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_26",
+        "kinetic_energy": 14.703,
+        "channel": "N45OO",
+        "intensity_factor": 0.037804878048780494,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_27",
+        "kinetic_energy": 14.17,
+        "channel": "N5OO",
+        "intensity_factor": 0.1634146341463415,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_28",
+        "kinetic_energy": 12.741,
+        "channel": "N45OO",
+        "intensity_factor": 0.030487804878048783,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NOO_29",
+        "kinetic_energy": 10.279,
+        "channel": "N4OO",
+        "intensity_factor": 0.1903914590747331,
+        "origin": "4d3/2",
+        "origin_binding_key": "N4 4d3/2"
+      },
+      {
+        "peak_name": "Xe_NOO_30",
+        "kinetic_energy": 8.3,
+        "channel": "N5OO",
+        "intensity_factor": 0.16219512195121955,
+        "origin": "4d5/2",
+        "origin_binding_key": "N5 4d5/2"
+      },
+      {
+        "peak_name": "Xe_NNO_01",
+        "kinetic_energy": 51.31,
+        "channel": "N3NO",
+        "intensity_factor": 0.061842918985776124,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_02",
+        "kinetic_energy": 52.18,
+        "channel": "N3NO",
+        "intensity_factor": 0.04081632653061224,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_03",
+        "kinetic_energy": 52.93,
+        "channel": "N3NO",
+        "intensity_factor": 0.10636982065553492,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_04",
+        "kinetic_energy": 53.24,
+        "channel": "N3NO",
+        "intensity_factor": 0.05627705627705627,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_05",
+        "kinetic_energy": 53.75,
+        "channel": "N3NO",
+        "intensity_factor": 0.06493506493506493,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_06",
+        "kinetic_energy": 54.06,
+        "channel": "N3NO",
+        "intensity_factor": 0.0494743351886209,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_07",
+        "kinetic_energy": 54.66,
+        "channel": "N3NO",
+        "intensity_factor": 0.08410636982065553,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_08",
+        "kinetic_energy": 54.98,
+        "channel": "N3NO",
+        "intensity_factor": 0.05132962275819418,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_09",
+        "kinetic_energy": 55.43,
+        "channel": "N3NO",
+        "intensity_factor": 0.05194805194805194,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_10",
+        "kinetic_energy": 55.58,
+        "channel": "N3NO",
+        "intensity_factor": 0.10080395794681507,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_11",
+        "kinetic_energy": 55.91,
+        "channel": "N3NO",
+        "intensity_factor": 0.06926406926406926,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_12",
+        "kinetic_energy": 56.36,
+        "channel": "N3NO",
+        "intensity_factor": 0.05689548546691404,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_13",
+        "kinetic_energy": 56.76,
+        "channel": "N3NO",
+        "intensity_factor": 0.04700061842918985,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_14",
+        "kinetic_energy": 57.23,
+        "channel": "N3NO",
+        "intensity_factor": 0.04329004329004328,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_15",
+        "kinetic_energy": 57.61,
+        "channel": "N3NO",
+        "intensity_factor": 0.04081632653061224,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_16",
+        "kinetic_energy": 57.97,
+        "channel": "N3NO",
+        "intensity_factor": 0.042053184910327765,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
+      },
+      {
+        "peak_name": "Xe_NNO_17",
+        "kinetic_energy": 58.42,
+        "channel": "N3NO",
+        "intensity_factor": 0.032776747062461344,
+        "origin": "4p3/2",
+        "origin_binding_key": "N3 4p3/2"
       }
     ]
   }

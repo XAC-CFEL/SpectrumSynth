@@ -65,6 +65,81 @@ def df_to_shell_data(df):
     }
 
 
+def read_auger_file(filename):
+    """Read Auger data file and return list of Auger peak dictionaries
+    
+    File format: 'peak_name', kinetic_energy, 'channel', relative_intensity, 'origin'
+    """
+    filepath = os.path.join(data_dir, filename)
+    if not os.path.exists(filepath):
+        print(f"Note: {filename} not found, skipping Auger data")
+        return []
+    
+    auger_peaks = []
+    with open(filepath, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # Parse the CSV-like format with quotes
+            parts = [p.strip().strip("'") for p in line.split(',')]
+            if len(parts) >= 5:
+                try:
+                    peak = {
+                        "peak_name": parts[0],
+                        "kinetic_energy": float(parts[1]),
+                        "channel": parts[2].strip().strip("'"),
+                        "relative_intensity": float(parts[3]),
+                        "origin": parts[4].strip().strip("'")
+                    }
+                    auger_peaks.append(peak)
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not parse Auger line: {line} - {e}")
+    
+    return auger_peaks
+
+
+def process_auger_data(auger_peaks, binding_energies):
+    """Process Auger peaks - use relative_intensity factors directly.
+    
+    The relative_intensity values in the file are already the correct scaling
+    factors. Each Auger peak intensity = origin_cross_section × relative_intensity.
+    
+    Returns list of processed Auger peak dictionaries.
+    """
+    if not auger_peaks:
+        return []
+    
+    # Create processed peaks without normalization
+    processed = []
+    for peak in auger_peaks:
+        origin = peak["origin"]
+        
+        # Find the binding energy key that contains this origin
+        # e.g., "2p3/2" matches "L3 2p3/2" in Argon
+        origin_binding_key = None
+        for key in binding_energies:
+            if origin in key or key == origin:
+                origin_binding_key = key
+                break
+        
+        if origin_binding_key is None:
+            print(f"Warning: Could not find binding energy for Auger origin '{origin}'")
+            continue
+        
+        # Use relative_intensity directly as the scaling factor
+        processed.append({
+            "peak_name": peak["peak_name"],
+            "kinetic_energy": peak["kinetic_energy"],
+            "channel": peak["channel"],
+            "intensity_factor": peak["relative_intensity"],
+            "origin": origin,
+            "origin_binding_key": origin_binding_key
+        })
+    
+    return processed
+
+
 def build_element_data():
     """Build the complete elements data dictionary"""
     
@@ -80,11 +155,16 @@ def build_element_data():
     ne2p_3half = scale_cross_section(ne2p, 2/3)  # j=3/2 has 4 states
     neon_shells = [ne1s, ne2s, ne2p_1half, ne2p_3half]
     
+    # Load and process Neon Auger data
+    neon_auger_raw = read_auger_file("neAuger.txt")
+    neon_auger = process_auger_data(neon_auger_raw, neon_binding)
+    
     elements["neon"] = {
         "name": "Neon",
         "symbol": "Ne",
         "binding_energies": neon_binding,
-        "shell_data": [df_to_shell_data(df) for df in neon_shells]
+        "shell_data": [df_to_shell_data(df) for df in neon_shells],
+        "auger_peaks": neon_auger
     }
     
     # Argon
@@ -103,11 +183,16 @@ def build_element_data():
     ar3p_3half = scale_cross_section(ar3p, 2/3)
     argon_shells = [ar2s, ar2p_1half, ar2p_3half, ar3s, ar3p_1half, ar3p_3half]
     
+    # Load and process Argon Auger data
+    argon_auger_raw = read_auger_file("arAuger.txt")
+    argon_auger = process_auger_data(argon_auger_raw, argon_binding)
+    
     elements["argon"] = {
         "name": "Argon",
         "symbol": "Ar",
         "binding_energies": argon_binding,
-        "shell_data": [df_to_shell_data(df) for df in argon_shells]
+        "shell_data": [df_to_shell_data(df) for df in argon_shells],
+        "auger_peaks": argon_auger
     }
     
     # Krypton
@@ -130,11 +215,16 @@ def build_element_data():
     kr4p_3half = scale_cross_section(kr4p, 2/3)
     krypton_shells = [kr3s, kr3p_1half, kr3p_3half, kr3d_3half, kr3d_5half, kr4s, kr4p_1half, kr4p_3half]
     
+    # Load and process Krypton Auger data
+    krypton_auger_raw = read_auger_file("krAuger.txt")
+    krypton_auger = process_auger_data(krypton_auger_raw, krypton_binding)
+    
     elements["krypton"] = {
         "name": "Krypton",
         "symbol": "Kr",
         "binding_energies": krypton_binding,
-        "shell_data": [df_to_shell_data(df) for df in krypton_shells]
+        "shell_data": [df_to_shell_data(df) for df in krypton_shells],
+        "auger_peaks": krypton_auger
     }
 
     #Xenon
@@ -166,11 +256,16 @@ def build_element_data():
                     xe4s, xe4p_1half, xe4p_3half, xe4d_3half, xe4d_5half, 
                     xe5s, xe5p_1half, xe5p_3half]
 
+    # Load and process Xenon Auger data
+    xenon_auger_raw = read_auger_file("xeAuger.txt")
+    xenon_auger = process_auger_data(xenon_auger_raw, xenon_binding)
+    
     elements["xenon"] = {
         "name": "Xenon",
         "symbol": "Xe",
         "binding_energies": xenon_binding,
-        "shell_data": [df_to_shell_data(df) for df in xenon_shells]
+        "shell_data": [df_to_shell_data(df) for df in xenon_shells],
+        "auger_peaks": xenon_auger
     }
     
     return elements
@@ -194,7 +289,8 @@ const ELEMENTS_DATA = {json_str};
     print(f"Generated {output_path}")
     print(f"  Elements: {', '.join(elements_data.keys())}")
     for key, elem in elements_data.items():
-        print(f"  - {elem['name']}: {len(elem['binding_energies'])} shells")
+        auger_count = len(elem.get('auger_peaks', []))
+        print(f"  - {elem['name']}: {len(elem['binding_energies'])} shells, {auger_count} Auger peaks")
 
 
 def main():

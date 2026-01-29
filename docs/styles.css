@@ -538,6 +538,53 @@ h4 {
     margin-bottom: 1rem;
 }
 
+/* Data Sources Table */
+.data-sources-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.data-sources-table thead {
+    background: linear-gradient(135deg, #0072B2 0%, #E69F00 100%);
+    color: white;
+}
+
+.data-sources-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.data-sources-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.data-sources-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-sources-table tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+.data-sources-table td {
+    padding: 12px 15px;
+}
+
+.data-sources-table a {
+    color: #0072B2;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.data-sources-table a:hover {
+    text-decoration: underline;
+}
+
 code {
     background: #f1f3f4;
     padding: 0.2rem 0.4rem;

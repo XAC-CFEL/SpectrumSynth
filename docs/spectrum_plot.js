@@ -38,6 +38,7 @@ class SpectrumPlotter {
             showGaussians: false,
             gaussianWidth: 1.0, // Default 1% of energy
             showAnnotations: true,
+            showAuger: true, // Show Auger peaks by default
             gasMultipliers: {},
             energyMultipliers: {}
         };
@@ -70,6 +71,7 @@ class SpectrumPlotter {
                 this.showGaussians = settings.showGaussians !== undefined ? settings.showGaussians : this.defaults.showGaussians;
                 this.gaussianWidth = settings.gaussianWidth !== undefined ? settings.gaussianWidth : this.defaults.gaussianWidth;
                 this.showAnnotations = settings.showAnnotations !== undefined ? settings.showAnnotations : this.defaults.showAnnotations;
+                this.showAuger = settings.showAuger !== undefined ? settings.showAuger : this.defaults.showAuger;
                 this.gasMultipliers = settings.gasMultipliers || {};
                 this.energyMultipliers = settings.energyMultipliers || {};
                 console.log('Loaded settings from cache:', settings);
@@ -90,6 +92,7 @@ class SpectrumPlotter {
         this.showGaussians = this.defaults.showGaussians;
         this.gaussianWidth = this.defaults.gaussianWidth;
         this.showAnnotations = this.defaults.showAnnotations;
+        this.showAuger = this.defaults.showAuger;
         this.gasMultipliers = {};
         this.energyMultipliers = {};
     }
@@ -104,6 +107,7 @@ class SpectrumPlotter {
                 showGaussians: this.showGaussians,
                 gaussianWidth: this.gaussianWidth,
                 showAnnotations: this.showAnnotations,
+                showAuger: this.showAuger,
                 gasMultipliers: this.gasMultipliers,
                 energyMultipliers: this.energyMultipliers
             };
@@ -145,6 +149,9 @@ class SpectrumPlotter {
         
         // Update annotations toggle buttons
         this.updateAnnotationsButtons();
+        
+        // Update Auger toggle buttons
+        this.updateAugerButtons();
         
         // Update multiplier inputs
         this.updateGasMultipliers();
@@ -314,6 +321,19 @@ class SpectrumPlotter {
         const offBtn = document.getElementById('annotations-off-btn');
         
         if (this.showAnnotations) {
+            onBtn?.classList.add('active');
+            offBtn?.classList.remove('active');
+        } else {
+            offBtn?.classList.add('active');
+            onBtn?.classList.remove('active');
+        }
+    }
+    
+    updateAugerButtons() {
+        const onBtn = document.getElementById('auger-on-btn');
+        const offBtn = document.getElementById('auger-off-btn');
+        
+        if (this.showAuger) {
             onBtn?.classList.add('active');
             offBtn?.classList.remove('active');
         } else {
@@ -561,6 +581,38 @@ class SpectrumPlotter {
             });
         }
         
+        // Auger toggle
+        const augerOnBtn = document.getElementById('auger-on-btn');
+        const augerOffBtn = document.getElementById('auger-off-btn');
+        
+        if (augerOnBtn && augerOffBtn) {
+            augerOnBtn.addEventListener('click', () => {
+                this.showAuger = true;
+                this.updateAugerButtons();
+                this.saveToCache();
+                const plotDiv = document.getElementById('spectrum-plot');
+                const xaxis = plotDiv.layout?.xaxis;
+                const yaxis = plotDiv.layout?.yaxis;
+                let xRange = null, yRange = null;
+                if (xaxis && xaxis.range) xRange = [...xaxis.range];
+                if (yaxis && yaxis.range) yRange = [...yaxis.range];
+                this.plotSpectrum(xRange, yRange);
+            });
+            
+            augerOffBtn.addEventListener('click', () => {
+                this.showAuger = false;
+                this.updateAugerButtons();
+                this.saveToCache();
+                const plotDiv = document.getElementById('spectrum-plot');
+                const xaxis = plotDiv.layout?.xaxis;
+                const yaxis = plotDiv.layout?.yaxis;
+                let xRange = null, yRange = null;
+                if (xaxis && xaxis.range) xRange = [...xaxis.range];
+                if (yaxis && yaxis.range) yRange = [...yaxis.range];
+                this.plotSpectrum(xRange, yRange);
+            });
+        }
+        
         // Clear cache button
         document.getElementById('clear-cache-btn').addEventListener('click', () => {
             this.clearCache();
@@ -675,10 +727,10 @@ class SpectrumPlotter {
                 if (shellData && shellData.photon_energy.length > 0) {
                     // Find nearest photon energy in data
                     let nearestIndex = 0;
-                    let minDiff = Math.abs(shellData.photon_energy[0] - kineticEnergy);
+                    let minDiff = Math.abs(shellData.photon_energy[0] - photonEnergy);
                     
                     for (let i = 1; i < shellData.photon_energy.length; i++) {
-                        const diff = Math.abs(shellData.photon_energy[i] - kineticEnergy);
+                        const diff = Math.abs(shellData.photon_energy[i] - photonEnergy);
                         if (diff < minDiff) {
                             minDiff = diff;
                             nearestIndex = i;
@@ -694,13 +746,81 @@ class SpectrumPlotter {
                         shell: shell,
                         beta: beta,
                         binding_energy: bindingEnergy,
-                        element: element.name
+                        element: element.name,
+                        isAuger: false
                     });
                 }
             }
         });
         
         return spectrumData;
+    }
+    
+    calculateAugerPeaks(elementKey, photonEnergy) {
+        const element = ELEMENTS_DATA[elementKey];
+        const ret = this.currentRet;
+        
+        // Get multipliers (default to 1.0 if not set)
+        const gasMultiplier = this.gasMultipliers[elementKey] || 1.0;
+        const energyMultiplier = this.energyMultipliers[photonEnergy] || 1.0;
+        const totalMultiplier = gasMultiplier * energyMultiplier;
+        
+        const augerData = [];
+        
+        // Check if element has Auger peaks
+        if (!element.auger_peaks || element.auger_peaks.length === 0) {
+            return augerData;
+        }
+        
+        // Process each Auger peak
+        element.auger_peaks.forEach(augerPeak => {
+            const originBindingKey = augerPeak.origin_binding_key;
+            const originBindingEnergy = element.binding_energies[originBindingKey];
+            
+            // Only show Auger peak if photon energy can ionize the origin shell
+            if (photonEnergy <= originBindingEnergy + ret) {
+                return;
+            }
+            
+            // Find the cross-section of the origin shell at this photon energy
+            const shellIndex = Object.keys(element.binding_energies).indexOf(originBindingKey);
+            const shellData = element.shell_data[Math.min(shellIndex, element.shell_data.length - 1)];
+            
+            if (!shellData || !shellData.photon_energy || shellData.photon_energy.length === 0) {
+                return;
+            }
+            
+            // Find nearest photon energy in data
+            let nearestIndex = 0;
+            let minDiff = Math.abs(shellData.photon_energy[0] - photonEnergy);
+            
+            for (let i = 1; i < shellData.photon_energy.length; i++) {
+                const diff = Math.abs(shellData.photon_energy[i] - photonEnergy);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nearestIndex = i;
+                }
+            }
+            
+            const originCrossSection = shellData.cs0[nearestIndex] || 0;
+            
+            // Auger peak intensity = origin cross-section * intensity factor from file
+            const augerIntensity = originCrossSection * augerPeak.intensity_factor * totalMultiplier;
+            
+            augerData.push({
+                x: augerPeak.kinetic_energy,  // Auger energy is fixed, not dependent on photon energy
+                y: augerIntensity,
+                shell: augerPeak.channel,  // Use channel name for annotation
+                beta: 0,  // Auger electrons don't have a simple beta
+                binding_energy: originBindingEnergy,
+                element: element.name,
+                isAuger: true,
+                origin: augerPeak.origin,
+                peakName: augerPeak.peak_name
+            });
+        });
+        
+        return augerData;
     }
     
     plotSpectrum(xRangeOverride = null, yRangeOverride = null) {
@@ -756,30 +876,120 @@ class SpectrumPlotter {
                         ? `${element.name} @ ${photonEnergy} eV`
                         : element.name;
                     
-                    traces.push({
-                        x: spectrumData.map(d => d.x),
-                        y: spectrumData.map(d => d.y),
-                        type: 'bar',
-                        name: traceName,
-                        opacity: 0.7,
-                        hovertemplate: `<b>${element.name} @ ${photonEnergy} eV - %{customdata.shell}</b><br>` +
-                                      'Kinetic Energy: %{x:.1f} eV<br>' +
-                                      'Binding Energy: %{customdata.binding_energy:.1f} eV<br>' +
-                                      'Cross Section: %{y:.3f} Mb<br>' +
-                                      'β: %{customdata.beta:.2f}<br>' +
-                                      '<extra></extra>',
-                        customdata: spectrumData.map(d => ({
-                            shell: d.shell,
-                            beta: d.beta,
-                            binding_energy: d.binding_energy
-                        })),
-                        marker: {
-                            color: colors.fill,
-                            line: { color: colors.line, width: 1 }
-                        },
-                        // Store metadata for legend click handling
-                        meta: { elementKey, photonEnergy, energyIndex }
+                    // ========== STEM LINE WIDTH SETTING ==========
+                    // Change this value to adjust the width of the stem lines (in pixels)
+                    const stemLineWidth = 2;
+                    // ==============================================
+                    
+                    // Create stem lines (vertical lines from 0 to peak height)
+                    spectrumData.forEach((d, idx) => {
+                        // Create multiple points along the stem for continuous hover
+                        const numStemPoints = 20;
+                        const yStart = this.logScale ? 0.0001 : 0;
+                        const yEnd = d.y;
+                        const xStem = [];
+                        const yStem = [];
+                        
+                        for (let i = 0; i <= numStemPoints; i++) {
+                            xStem.push(d.x);
+                            if (this.logScale) {
+                                // Logarithmic interpolation for log scale
+                                const logStart = Math.log10(yStart);
+                                const logEnd = Math.log10(yEnd);
+                                yStem.push(Math.pow(10, logStart + (logEnd - logStart) * i / numStemPoints));
+                            } else {
+                                // Linear interpolation for linear scale
+                                yStem.push(yStart + (yEnd - yStart) * i / numStemPoints);
+                            }
+                        }
+                        
+                        // Add vertical line trace for each peak
+                        traces.push({
+                            x: xStem,
+                            y: yStem,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: traceName,
+                            legendgroup: `${elementKey}_${photonEnergy}`,
+                            showlegend: idx === 0,  // Only show legend for first peak
+                            line: { color: colors.fill, width: stemLineWidth },
+                            hovertemplate: `<b>${element.name} @ ${photonEnergy} eV - ${d.shell}</b><br>` +
+                                          `Kinetic Energy: ${d.x.toFixed(1)} eV<br>` +
+                                          `Binding Energy: ${d.binding_energy.toFixed(1)} eV<br>` +
+                                          `Intensity: ${d.y.toFixed(3)} a.u.<br>` +
+                                          `β: ${d.beta.toFixed(2)}<br>` +
+                                          '<extra></extra>',
+                            meta: { elementKey, photonEnergy, energyIndex, isStemLine: true }
+                        });
                     });
+                }
+                
+                // Calculate Auger peaks if enabled
+                if (this.showAuger) {
+                    const augerData = this.calculateAugerPeaks(elementKey, photonEnergy);
+                    
+                    // Store Auger data with metadata
+                    augerData.forEach(d => allSpectrumData.push({ 
+                        ...d, 
+                        elementKey,
+                        photonEnergy,
+                        energyIndex 
+                    }));
+                    
+                    if (augerData.length > 0) {
+                        const colors = this.selectedPhotonEnergies.length > 1 
+                            ? energyColors 
+                            : (ELEMENT_COLORS[elementKey] || { fill: '#667eea', line: '#764ba2' });
+                        
+                        const traceName = this.selectedPhotonEnergies.length > 1
+                            ? `${element.name} Auger @ ${photonEnergy} eV`
+                            : `${element.name} Auger`;
+                        
+                        // ========== AUGER STEM LINE WIDTH SETTING ==========
+                        // Change this value to adjust the width of Auger stem lines (in pixels)
+                        const augerStemLineWidth = 2;
+                        // ====================================================
+                        
+                        // Create stem lines for Auger peaks
+                        augerData.forEach((d, idx) => {
+                            // Create multiple points along the stem for continuous hover
+                            const numStemPoints = 20;
+                            const yStart = this.logScale ? 0.0001 : 0;
+                            const yEnd = d.y;
+                            const xStem = [];
+                            const yStem = [];
+                            
+                            for (let i = 0; i <= numStemPoints; i++) {
+                                xStem.push(d.x);
+                                if (this.logScale) {
+                                    // Logarithmic interpolation for log scale
+                                    const logStart = Math.log10(yStart);
+                                    const logEnd = Math.log10(yEnd);
+                                    yStem.push(Math.pow(10, logStart + (logEnd - logStart) * i / numStemPoints));
+                                } else {
+                                    // Linear interpolation for linear scale
+                                    yStem.push(yStart + (yEnd - yStart) * i / numStemPoints);
+                                }
+                            }
+                            
+                            traces.push({
+                                x: xStem,
+                                y: yStem,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: traceName,
+                                legendgroup: `${elementKey}_${photonEnergy}_auger`,
+                                showlegend: idx === 0,
+                                line: { color: colors.fill, width: augerStemLineWidth, dash: 'dot' },
+                                hovertemplate: `<b>${element.name} Auger - ${d.shell}</b><br>` +
+                                              `Kinetic Energy: ${d.x.toFixed(1)} eV<br>` +
+                                              `Origin: ${d.origin}<br>` +
+                                              `Cross Section: ${d.y.toFixed(3)} Mb<br>` +
+                                              '<extra></extra>',
+                                meta: { elementKey, photonEnergy, energyIndex, isAuger: true, isStemLine: true }
+                            });
+                        });
+                    }
                 }
             });
         });
@@ -911,8 +1121,6 @@ class SpectrumPlotter {
                 xanchor: window.innerWidth < 768 ? 'center' : 'left',
                 yanchor: window.innerWidth < 768 ? 'top' : 'top'
             },
-            barmode: 'group',
-            bargap: 0.05,
             annotations: annotations
         };
         
@@ -927,12 +1135,14 @@ class SpectrumPlotter {
         if (this.showGaussians && allSpectrumData.length > 0) {
             const widthPercent = this.gaussianWidth; // Percentage of energy (default 1%)
             
-            // Fixed 0.1 eV steps from plotMin to plotMax
+            // Fixed 0.1 eV steps from 0.1 eV (min for log scale) to max photon energy
+            const gaussMin = 0.1;  // Minimum for log scale safety
+            const gaussMax = maxPhotonEnergy;
             const stepSize = 0.1;
-            const numPoints = Math.ceil((plotMax - plotMin) / stepSize);
+            const numPoints = Math.ceil((gaussMax - gaussMin) / stepSize) + 1;
             const xGauss = [];
-            for (let i = 0; i <= numPoints; i++) {
-                xGauss.push(plotMin + i * stepSize);
+            for (let i = 0; i < numPoints; i++) {
+                xGauss.push(gaussMin + i * stepSize);
             }
             
             // Sum of all Gaussians
@@ -1029,62 +1239,120 @@ class SpectrumPlotter {
         
         Plotly.newPlot('spectrum-plot', traces, layout, config);
         
-        // Store spectrum data
+        // Store spectrum data for recalculation
         this.currentSpectrumData = allSpectrumData;
+        this.currentGaussianXValues = this.showGaussians ? this.gaussianXValues : null;
+        this.currentGaussianWidth = this.gaussianWidth;
         
-        // Listen for plot changes
+        // Listen for plot changes - use plotly_restyle which fires AFTER visibility changes
         const plotDiv = document.getElementById('spectrum-plot');
-        plotDiv.removeAllListeners?.('plotly_legendclick');
+        plotDiv.removeAllListeners?.('plotly_restyle');
         
-        plotDiv.on('plotly_legendclick', (eventData) => {
-            const clickedIndex = eventData.curveNumber;
-            const trace = eventData.data[clickedIndex];
-            
-            // Update visibility tracking
-            if (trace.meta) {
-                const { elementKey, photonEnergy } = trace.meta;
+        plotDiv.on('plotly_restyle', (eventData) => {
+            // Check if this is a visibility change
+            if (eventData && eventData[0] && 'visible' in eventData[0]) {
+                // Recalculate Gaussians based on new visibility state
+                this.recalculateGaussiansFromVisiblePeaks();
+            }
+        });
+    }
+    
+    recalculateGaussiansFromVisiblePeaks() {
+        if (!this.showGaussians || !this.currentSpectrumData || !this.currentGaussianXValues) {
+            return;
+        }
+        
+        const plotDiv = document.getElementById('spectrum-plot');
+        if (!plotDiv || !plotDiv.data) {
+            return;
+        }
+        
+        const xGauss = this.currentGaussianXValues;
+        const numPoints = xGauss.length;
+        const widthPercent = this.currentGaussianWidth;
+        
+        // Build a set of visible (elementKey, photonEnergy, isAuger) combinations from scatter traces
+        const visibleCombos = new Set();
+        
+        plotDiv.data.forEach((trace, index) => {
+            // Look at scatter traces with metadata (not Gaussian or Total traces)
+            if (trace.type === 'scatter' && trace.meta && !trace.meta.isGaussian && !trace.meta.isTotal) {
                 const isVisible = trace.visible === true || trace.visible === undefined;
-                const newVisibility = isVisible ? 'legendonly' : true;
-                
-                // Also toggle corresponding Gaussian trace
-                const gaussianIndex = eventData.data.findIndex((t, i) => 
-                    i !== clickedIndex && 
-                    t.meta?.elementKey === elementKey && 
-                    t.meta?.photonEnergy === photonEnergy && 
-                    t.meta?.isGaussian
-                );
-                
-                if (gaussianIndex !== -1) {
-                    // Use restyle to update visibility of the Gaussian trace
-                    setTimeout(() => {
-                        Plotly.restyle('spectrum-plot', { visible: newVisibility }, [gaussianIndex]).then(() => {
-                            // Update visibility tracking AFTER the toggle completes
-                            if (isVisible) {
-                                // Will become hidden
-                                this.visibleElements.delete(elementKey);
-                                this.visibleEnergies.delete(photonEnergy);
-                            } else {
-                                // Will become visible
-                                this.visibleElements.add(elementKey);
-                                this.visibleEnergies.add(photonEnergy);
-                            }
-                            
-                            // Recalculate Total trace to exclude hidden Gaussians
-                            this.updateTotalTrace();
-                        });
-                    }, 100);
-                } else {
-                    // No Gaussian trace, just update visibility tracking
-                    if (isVisible) {
-                        this.visibleElements.delete(elementKey);
-                        this.visibleEnergies.delete(photonEnergy);
-                    } else {
-                        this.visibleElements.add(elementKey);
-                        this.visibleEnergies.add(photonEnergy);
-                    }
+                // Only check traces that have showlegend (the representative trace for each group)
+                if (isVisible && trace.showlegend) {
+                    const key = `${trace.meta.elementKey}_${trace.meta.photonEnergy}_${trace.meta.isAuger || false}`;
+                    visibleCombos.add(key);
                 }
             }
         });
+        
+        // Group spectrum data by element/energy/auger and only include visible ones
+        const combinedPeaks = {};
+        this.currentSpectrumData.forEach(d => {
+            const key = `${d.elementKey}_${d.photonEnergy}_${d.isAuger || false}`;
+            if (!visibleCombos.has(key)) {
+                return; // Skip hidden peaks
+            }
+            
+            const comboKey = `${d.elementKey}_${d.photonEnergy}`;
+            if (!combinedPeaks[comboKey]) {
+                combinedPeaks[comboKey] = {
+                    peaks: [],
+                    elementKey: d.elementKey,
+                    photonEnergy: d.photonEnergy,
+                    energyIndex: d.energyIndex
+                };
+            }
+            combinedPeaks[comboKey].peaks.push(d);
+        });
+        
+        // Calculate new Gaussian curves
+        const totalY = new Array(numPoints).fill(0);
+        const gaussianUpdates = [];  // Store {traceIndex, yValues}
+        
+        // Find and update each Gaussian trace
+        plotDiv.data.forEach((trace, index) => {
+            if (trace.meta?.isGaussian) {
+                const comboKey = `${trace.meta.elementKey}_${trace.meta.photonEnergy}`;
+                const combo = combinedPeaks[comboKey];
+                
+                const elementY = new Array(numPoints).fill(0);
+                
+                if (combo && combo.peaks.length > 0) {
+                    combo.peaks.forEach(peak => {
+                        const mu = peak.x;
+                        const amplitude = peak.y;
+                        const fwhm = (widthPercent / 100.0) * mu;
+                        const sigma = fwhm / 2.355;
+                        
+                        for (let i = 0; i < numPoints; i++) {
+                            const x = xGauss[i];
+                            const gauss = amplitude * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+                            elementY[i] += gauss;
+                        }
+                    });
+                }
+                
+                // Add to total
+                for (let i = 0; i < numPoints; i++) {
+                    totalY[i] += elementY[i];
+                }
+                
+                gaussianUpdates.push({ index, y: elementY });
+            }
+        });
+        
+        // Find Total trace and update
+        const totalIndex = plotDiv.data.findIndex(t => t.meta?.isTotal);
+        
+        // Apply all updates
+        gaussianUpdates.forEach(update => {
+            Plotly.restyle('spectrum-plot', { y: [update.y] }, [update.index]);
+        });
+        
+        if (totalIndex !== -1) {
+            Plotly.restyle('spectrum-plot', { y: [totalY] }, [totalIndex]);
+        }
     }
     
     updateTotalTrace() {

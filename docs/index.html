@@ -18,7 +18,7 @@
     <main class="container">
         <!-- Tab Navigation -->
         <div class="tab-navigation">
-            <button class="tab-btn active" data-tab="spectrum">Spectrum + Element Info</button>
+            <button class="tab-btn active" data-tab="spectrum">Spectrum</button>
             <button class="tab-btn" data-tab="setup">Setup</button>
             <button class="tab-btn" data-tab="about">About</button>
         </div>
@@ -97,6 +97,14 @@
                         </div>
                     </div>
                     
+                    <div class="control-group">
+                        <label>Auger Peaks:</label>
+                        <div class="toggle-group">
+                            <button id="auger-on-btn" class="toggle-btn active">On</button>
+                            <button id="auger-off-btn" class="toggle-btn">Off</button>
+                        </div>
+                    </div>
+                    
                     <div class="control-group" id="gaussian-width-group" style="display: none;">
                         <label for="gaussian-width-input">Gaussian Width (%):</label>
                         <input type="number" id="gaussian-width-input" value="1.0" min="0.1" max="20" step="0.1">
@@ -144,22 +152,50 @@
                     <li>Photoionization cross-sections from tabulated data</li>
                     <li>Beta asymmetry parameters for angular distribution</li>
                     <li>Kinetic energy: KE = hν - BE - φ (work function)</li>
+                    <li>It also includes data from some Auger-Meitner channels</li>
                     <li>Optional Gaussian convolution for peak broadening</li>
                 </ul>
                 
                 <h3>Credits</h3>
                 <ul>
-                    <li>Developed by Moritz Zander with a great amount of data searched and found by Markus Braune</li>
-                    <li>XPS cross-section data from elettra</li>
-                    <li>Ionisation energy data from NIST</li>
+                    <li>Developed by Moritz Zander with a great amount of data compiled by Markus Braune</li>
                 </ul>
+                
+                <h3>Data Sources</h3>
+                <table class="data-sources-table">
+                    <thead>
+                        <tr>
+                            <th>Data Type</th>
+                            <th>Source</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cross-sections and betas of photoelectrons</td>
+                            <td><a href="https://vuo.elettra.eu/services/elements/WebElements.html">Elettra</a></td>
+                            <td>Calculated data</td>
+                        </tr>
+                        <tr>
+                            <td>Binding Energies</td>
+                            <td><a href="https://physics.nist.gov/PhysRefData/Handbook/periodictable.htm">NIST</a></td>
+                            <td>Measured data</td>
+                        </tr>
+                        <tr>
+                            <td>Auger Data</td>
+                            <td><a href="https://iopscience.iop.org/article/10.1088/0031-8949/8/4/004">Kai Siegbahn</a></td>
+                            <td>Argon L2,3</td>
+                        </tr>
+                        <!-- Add more rows as needed -->
+                    </tbody>
+                </table>
             </section>
         </div>
     </main>
 
     <footer>
         <div class="container">
-            <p>2025 SpectrumSynth | Interactive XPS Analysis Tool</p>
+            <p>2025 SpectrumSynth | Interactive XPS Analysis Tool | MPL-2.0 license</p>
         </div>
     </footer>
 
