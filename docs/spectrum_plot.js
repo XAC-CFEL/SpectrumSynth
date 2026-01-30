@@ -34,6 +34,7 @@ class SpectrumPlotter {
             elements: ['neon'],
             photonEnergies: [1486.6],
             ret: 0,
+            xAxisType: 'invquad', // 'invquad' or 'linear'
             logScale: false, // Default to linear scale
             showGaussians: false,
             gaussianWidth: 1.0, // Default 1% of energy
@@ -68,6 +69,7 @@ class SpectrumPlotter {
                     this.selectedPhotonEnergies = settings.photonEnergies || [...this.defaults.photonEnergies];
                 }
                 this.currentRet = settings.ret || this.defaults.ret;
+                this.xAxisType = settings.xAxisType || this.defaults.xAxisType;
                 this.logScale = settings.logScale !== undefined ? settings.logScale : this.defaults.logScale;
                 this.showGaussians = settings.showGaussians !== undefined ? settings.showGaussians : this.defaults.showGaussians;
                 this.gaussianWidth = settings.gaussianWidth !== undefined ? settings.gaussianWidth : this.defaults.gaussianWidth;
@@ -90,6 +92,7 @@ class SpectrumPlotter {
         this.selectedElements = [...this.defaults.elements];
         this.selectedPhotonEnergies = [...this.defaults.photonEnergies];
         this.currentRet = this.defaults.ret;
+        this.xAxisType = this.defaults.xAxisType;
         this.logScale = this.defaults.logScale;
         this.showGaussians = this.defaults.showGaussians;
         this.gaussianWidth = this.defaults.gaussianWidth;
@@ -106,6 +109,7 @@ class SpectrumPlotter {
                 elements: this.selectedElements,
                 photonEnergies: this.selectedPhotonEnergies,
                 ret: this.currentRet,
+                xAxisType: this.xAxisType,
                 logScale: this.logScale,
                 showGaussians: this.showGaussians,
                 gaussianWidth: this.gaussianWidth,
@@ -144,6 +148,9 @@ class SpectrumPlotter {
         
         // Update selected photon energies display
         this.updateSelectedEnergiesDisplay();
+        
+        // Update x-axis toggle buttons
+        this.updateXAxisButtons();
         
         // Update scale toggle buttons
         this.updateScaleButtons();
@@ -288,6 +295,19 @@ class SpectrumPlotter {
             this.updateEnergyMultipliers();
             this.updateBindingEnergies();
             this.plotSpectrum();
+        }
+    }
+    
+    updateXAxisButtons() {
+        const invquadBtn = document.getElementById('x-invquad-btn');
+        const linearBtn = document.getElementById('x-linear-btn');
+        
+        if (this.xAxisType === 'invquad') {
+            invquadBtn.classList.add('active');
+            linearBtn.classList.remove('active');
+        } else {
+            linearBtn.classList.add('active');
+            invquadBtn.classList.remove('active');
         }
     }
     
@@ -494,6 +514,21 @@ class SpectrumPlotter {
         
         // Work function is fixed at 0 for now (slider removed)
         this.currentRet = 0;
+        
+        // X-axis type toggle
+        document.getElementById('x-invquad-btn').addEventListener('click', () => {
+            this.xAxisType = 'invquad';
+            this.updateXAxisButtons();
+            this.saveToCache();
+            this.plotSpectrum();
+        });
+        
+        document.getElementById('x-linear-btn').addEventListener('click', () => {
+            this.xAxisType = 'linear';
+            this.updateXAxisButtons();
+            this.saveToCache();
+            this.plotSpectrum();
+        });
         
         // Log/Lin scale toggle - preserve x-axis range
         document.getElementById('log-scale-btn').addEventListener('click', () => {
@@ -850,13 +885,27 @@ class SpectrumPlotter {
     plotSpectrum(xRangeOverride = null, yRangeOverride = null) {
         const yAxisType = this.logScale ? 'log' : 'linear';
         
+        // Helper function to transform x values based on axis type
+        const transformX = (x) => {
+            if (this.xAxisType === 'invquad') {
+                return Math.log10(x); // Log scale (inverse quadratic appearance)
+            } else {
+                return x; // Linear scale
+            }
+        };
+        
+        const xAxisConfig = this.xAxisType === 'invquad' 
+            ? { type: 'log', title: 'Kinetic Energy (eV)' }
+            : { type: 'linear', title: 'Kinetic Energy (eV)' };
+        
         if (this.selectedElements.length === 0 || this.selectedPhotonEnergies.length === 0) {
             const layout = {
                 title: 'XPS Spectrum - Select elements and photon energies',
                 xaxis: { 
-                    title: 'Kinetic Energy (eV)', 
-                    range: [Math.log10(1500), Math.log10(1.0)],  // Reversed: [max, min] in log space
-                    type: 'log'
+                    ...xAxisConfig,
+                    range: this.xAxisType === 'invquad' 
+                        ? [Math.log10(1500), Math.log10(1.0)]  // Reversed: [max, min] in log space
+                        : [1.0, 1500]  // Linear: [min, max]
                 },
                 yaxis: { title: 'Cross Section (Mb)', type: yAxisType },
                 height: 500,
@@ -1037,12 +1086,18 @@ class SpectrumPlotter {
         let yMax = undefined;
         
         if (xRangeOverride && xRangeOverride.length === 2) {
-            // xRangeOverride is in log space [log(max), log(min)]
-            // Convert back to linear space
-            const val0 = Math.pow(10, xRangeOverride[0]);  // Higher value (left side)
-            const val1 = Math.pow(10, xRangeOverride[1]);  // Lower value (right side)
-            plotMax = Math.max(val0, val1);
-            plotMin = Math.max(1.0, Math.min(val0, val1));
+            if (this.xAxisType === 'invquad') {
+                // xRangeOverride is in log space [log(max), log(min)]
+                // Convert back to linear space
+                const val0 = Math.pow(10, xRangeOverride[0]);  // Higher value (left side)
+                const val1 = Math.pow(10, xRangeOverride[1]);  // Lower value (right side)
+                plotMax = Math.max(val0, val1);
+                plotMin = Math.max(1.0, Math.min(val0, val1));
+            } else {
+                // Linear x-axis: range is already in linear space
+                plotMax = Math.max(xRangeOverride[0], xRangeOverride[1]);
+                plotMin = Math.min(xRangeOverride[0], xRangeOverride[1]);
+            }
         }
         if (yRangeOverride && yRangeOverride.length === 2) {
             yMin = yRangeOverride[0];
@@ -1055,9 +1110,10 @@ class SpectrumPlotter {
             const layout = {
                 title: `${elementNames} XPS Spectrum - No peaks (photon energies: ${energyStr} eV)`,
                 xaxis: { 
-                    title: 'Kinetic Energy (eV)', 
-                    range: [Math.log10(maxPhotonEnergy), Math.log10(1.0)],  // Reversed: [max, min] in log space
-                    type: 'log'
+                    ...xAxisConfig,
+                    range: this.xAxisType === 'invquad' 
+                        ? [Math.log10(maxPhotonEnergy), Math.log10(1.0)]  // Reversed: [max, min] in log space
+                        : [1.0, maxPhotonEnergy]  // Linear: [min, max]
                 },
                 yaxis: { title: 'Cross Section (Mb)', type: yAxisType },
                 height: 500,
@@ -1100,8 +1156,9 @@ class SpectrumPlotter {
             
             annotationMap.forEach(ann => {
                 const label = ann.shells.join(', ');
+                const xPos = this.xAxisType === 'invquad' ? Math.log10(ann.x) : ann.x;
                 annotations.push({
-                    x: Math.log10(ann.x),  // Log scale for x-axis
+                    x: xPos,
                     y: this.logScale ? Math.log10(ann.y) : ann.y,
                     text: label,
                     showarrow: false,
@@ -1124,9 +1181,10 @@ class SpectrumPlotter {
                 font: { size: 16 }
             },
             xaxis: { 
-                title: 'Kinetic Energy (eV)',
-                range: [Math.log10(plotMax), Math.log10(plotMin)],  // Reversed: [max, min] in log space
-                type: 'log'
+                ...xAxisConfig,
+                range: this.xAxisType === 'invquad' 
+                    ? [Math.log10(plotMax), Math.log10(plotMin)]  // Reversed: [max, min] in log space
+                    : [plotMin, plotMax]  // Linear: [min, max]
             },
             yaxis: { 
                 title: 'Cross Section (Mb)',
