@@ -37,6 +37,7 @@ class SpectrumPlotter {
             logScale: false, // Default to linear scale
             showGaussians: false,
             gaussianWidth: 1.0, // Default 1% of energy
+            gaussianFixedWidth: 0.0, // Default 0 eV fixed width
             showAnnotations: true,
             showAuger: true, // Show Auger peaks by default
             gasMultipliers: {},
@@ -70,6 +71,7 @@ class SpectrumPlotter {
                 this.logScale = settings.logScale !== undefined ? settings.logScale : this.defaults.logScale;
                 this.showGaussians = settings.showGaussians !== undefined ? settings.showGaussians : this.defaults.showGaussians;
                 this.gaussianWidth = settings.gaussianWidth !== undefined ? settings.gaussianWidth : this.defaults.gaussianWidth;
+                this.gaussianFixedWidth = settings.gaussianFixedWidth !== undefined ? settings.gaussianFixedWidth : this.defaults.gaussianFixedWidth;
                 this.showAnnotations = settings.showAnnotations !== undefined ? settings.showAnnotations : this.defaults.showAnnotations;
                 this.showAuger = settings.showAuger !== undefined ? settings.showAuger : this.defaults.showAuger;
                 this.gasMultipliers = settings.gasMultipliers || {};
@@ -91,6 +93,7 @@ class SpectrumPlotter {
         this.logScale = this.defaults.logScale;
         this.showGaussians = this.defaults.showGaussians;
         this.gaussianWidth = this.defaults.gaussianWidth;
+        this.gaussianFixedWidth = this.defaults.gaussianFixedWidth;
         this.showAnnotations = this.defaults.showAnnotations;
         this.showAuger = this.defaults.showAuger;
         this.gasMultipliers = {};
@@ -106,6 +109,7 @@ class SpectrumPlotter {
                 logScale: this.logScale,
                 showGaussians: this.showGaussians,
                 gaussianWidth: this.gaussianWidth,
+                gaussianFixedWidth: this.gaussianFixedWidth,
                 showAnnotations: this.showAnnotations,
                 showAuger: this.showAuger,
                 gasMultipliers: this.gasMultipliers,
@@ -304,15 +308,18 @@ class SpectrumPlotter {
         const onBtn = document.getElementById('gaussians-on-btn');
         const offBtn = document.getElementById('gaussians-off-btn');
         const widthGroup = document.getElementById('gaussian-width-group');
+        const fixedWidthGroup = document.getElementById('gaussian-fixed-width-group');
         
         if (this.showGaussians) {
             onBtn.classList.add('active');
             offBtn.classList.remove('active');
             widthGroup.style.display = 'block';
+            fixedWidthGroup.style.display = 'block';
         } else {
             offBtn.classList.add('active');
             onBtn.classList.remove('active');
             widthGroup.style.display = 'none';
+            fixedWidthGroup.style.display = 'none';
         }
     }
     
@@ -536,6 +543,23 @@ class SpectrumPlotter {
         const gaussianWidthInput = document.getElementById('gaussian-width-input');
         gaussianWidthInput.addEventListener('change', () => {
             this.gaussianWidth = parseFloat(gaussianWidthInput.value) || 1.0;
+            this.saveToCache();
+            if (this.showGaussians) {
+                // Get current axis ranges
+                const plotDiv = document.getElementById('spectrum-plot');
+                const xaxis = plotDiv.layout?.xaxis;
+                const yaxis = plotDiv.layout?.yaxis;
+                let xRange = null, yRange = null;
+                if (xaxis && xaxis.range) xRange = [...xaxis.range];
+                if (yaxis && yaxis.range) yRange = [...yaxis.range];
+                this.plotSpectrum(xRange, yRange);
+            }
+        });
+        
+        // Gaussian fixed width input
+        const gaussianFixedWidthInput = document.getElementById('gaussian-fixed-width-input');
+        gaussianFixedWidthInput.addEventListener('change', () => {
+            this.gaussianFixedWidth = parseFloat(gaussianFixedWidthInput.value) || 0.0;
             this.saveToCache();
             if (this.showGaussians) {
                 // Get current axis ranges
@@ -1134,6 +1158,7 @@ class SpectrumPlotter {
         // Add Gaussian curves if enabled
         if (this.showGaussians && allSpectrumData.length > 0) {
             const widthPercent = this.gaussianWidth; // Percentage of energy (default 1%)
+            const fixedWidth = this.gaussianFixedWidth; // Fixed width in eV (default 0)
             
             // Variable step size for better resolution at low energies
             // Define energy regions with different step sizes
@@ -1206,8 +1231,8 @@ class SpectrumPlotter {
                 combo.peaks.forEach(peak => {
                     const mu = peak.x;
                     const amplitude = peak.y;
-                    // Calculate sigma as percentage of kinetic energy
-                    const fwhm = (widthPercent / 100.0) * mu;
+                    // Calculate sigma as percentage of kinetic energy plus fixed width
+                    const fwhm = (widthPercent / 100.0) * mu + fixedWidth;
                     const sigma = fwhm / 2.355; // Convert FWHM to sigma
                     
                     for (let i = 0; i < numPoints; i++) {
@@ -1271,6 +1296,7 @@ class SpectrumPlotter {
         this.currentSpectrumData = allSpectrumData;
         this.currentGaussianXValues = this.showGaussians ? this.gaussianXValues : null;
         this.currentGaussianWidth = this.gaussianWidth;
+        this.currentGaussianFixedWidth = this.gaussianFixedWidth;
         
         // Listen for plot changes - use plotly_restyle which fires AFTER visibility changes
         const plotDiv = document.getElementById('spectrum-plot');
@@ -1298,6 +1324,7 @@ class SpectrumPlotter {
         const xGauss = this.currentGaussianXValues;
         const numPoints = xGauss.length;
         const widthPercent = this.currentGaussianWidth;
+        const fixedWidth = this.currentGaussianFixedWidth || 0.0;
         
         // Build a set of visible (elementKey, photonEnergy, isAuger) combinations from scatter traces
         const visibleCombos = new Set();
@@ -1350,7 +1377,7 @@ class SpectrumPlotter {
                     combo.peaks.forEach(peak => {
                         const mu = peak.x;
                         const amplitude = peak.y;
-                        const fwhm = (widthPercent / 100.0) * mu;
+                        const fwhm = (widthPercent / 100.0) * mu + fixedWidth;
                         const sigma = fwhm / 2.355;
                         
                         for (let i = 0; i < numPoints; i++) {
